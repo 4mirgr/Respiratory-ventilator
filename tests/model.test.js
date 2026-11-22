@@ -132,3 +132,15 @@ test("SIMV includes mandatory and pressure-supported spontaneous breaths", () =>
   assert.ok(simv.samples.at(-1).time >= 14);
   assert.ok(simv.samples.every((point, index) => index === 0 || point.time > simv.samples[index - 1].time));
 });
+
+test("traces cover whole ventilation patterns and meet their starting state at the wrap", () => {
+  for (const [mode, rr, cyclesPerPattern] of [["VC", 14, 1], ["VC", 24, 1], ["SIMV", 14, 2]]) {
+    const { samples } = simulate(scenario, { ...settings, mode, rr });
+    const period = (60 / rr) * cyclesPerPattern;
+    const endpoint = samples.at(-1);
+
+    assert.equal(endpoint.time, Math.ceil(14 / period) * period);
+    assert.deepEqual({ ...endpoint, time: 0 }, samples[0]);
+    assert.ok(samples.every((sample, index) => index === 0 || sample.time > samples[index - 1].time));
+  }
+});

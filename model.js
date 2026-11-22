@@ -137,14 +137,13 @@ function runPattern(pattern, mechanics, startVolume, samples) {
 
 function traceSamples(cycleSamples, cycleDuration) {
   const samples = [];
-  const repeats = Math.ceil(TRACE_DURATION / cycleDuration) + 1;
+  const repeats = Math.ceil(TRACE_DURATION / cycleDuration);
   for (let repeat = 0; repeat < repeats; repeat++) {
     for (const sample of cycleSamples) {
-      const time = repeat * cycleDuration + sample.time;
-      samples.push({ ...sample, time });
-      if (time >= TRACE_DURATION) return samples;
+      samples.push({ ...sample, time: repeat * cycleDuration + sample.time });
     }
   }
+  samples.push({ ...cycleSamples[0], time: repeats * cycleDuration });
   return samples;
 }
 
@@ -207,6 +206,8 @@ function estimateGas(scenario, minuteVentilation, fio2, peep) {
  * Airway resistance and respiratory-system compliance are constant. Volume
  * is in mL above passive equilibrium at applied PEEP, so it includes trapped
  * volume. Flow is in L/min, pressure is in cmH2O, and time is in seconds.
+ * The trace covers whole patterns for at least 14 seconds and closes at its
+ * initial state for continuous playback.
  * A scheduled effort drives spontaneous breaths. Bilevel is pressure-assisted
  * breathing. SIMV alternates mandatory VC timing with one scheduled supported
  * spontaneous breath in every two mandatory cycles. Triggering, leaks, apnea

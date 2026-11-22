@@ -1,9 +1,10 @@
 import { lesson, scenarios, conditions, modes } from "./content.js";
 import { simulate } from "./model.js";
 import { createWaveforms } from "./waveforms.js";
+import { createOrganMotion } from "./organ-motion.js";
 
 const find = selector => document.querySelector(selector);
-const defaults = { mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8 };
+const defaults = { mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8, heartRate: null };
 const settings = { ...defaults };
 const controlDefinitions = [
   { key: "rr", label: "RR", name: "تعداد تنفس در دقیقه", min: 6, max: 35, step: 1 },
@@ -13,6 +14,7 @@ const controlDefinitions = [
   { key: "ie", label: "I:E", name: "نسبت زمان دم به بازدم", min: 0.5, max: 5, step: 0.5, format: value => "1:" + value },
   { key: "inspPressure", label: "ΔPinsp", name: "فشار دمی بالاتر از فشار بازدمی", min: 4, max: 28, step: 1, modes: ["PC", "BILEVEL"] },
   { key: "pressureSupport", label: "PS", name: "فشار حمایتی در تنفس خودبه‌خودی", min: 0, max: 24, step: 1, modes: ["SIMV"] },
+  { key: "heartRate", label: "HR", name: "ضربان قلب در نمای شماتیک، بر حسب ضربان در دقیقه", min: 35, max: 190, step: 1 },
 ];
 const mechanicsDefinitions = [
   { key: "compliance", label: "کامپلاینس", name: "کامپلاینس دستگاه تنفسی بر حسب میلی‌لیتر بر سانتی‌متر آب", min: 15, max: 100 },
@@ -25,14 +27,20 @@ const caseSelect = find("#case-select");
 const conditionSelect = find("#condition-select");
 const modeSelect = find("#mode-select");
 const pauseButton = find("#pause-monitor");
-const breathPhase = find("#breath-phase");
-const organImage = find("#organ-image");
+const breathIndicators = [find("#breath-phase"), find("#monitor-breath-phase")];
+const organMotion = createOrganMotion();
+const deviceTabs = [...document.querySelectorAll(".device-navigation button")];
 let bicarbonate = null;
 
 const chart = createWaveforms(sample => {
-  const phase = sample.flow > 0.75 ? "دم" : sample.flow < -0.75 ? "بازدم" : "جریان نزدیک صفر";
-  if (breathPhase.textContent !== phase) breathPhase.textContent = phase;
-  organImage.style.transform = "scale(" + (1 + Math.max(0, Math.min(1400, sample.volume)) / 13500) + ")";
+  const phase = sample.flow > 0.75 ? "دم" : sample.flow < -0.75 ? "بازدم" : "جریان کم";
+  for (const indicator of breathIndicators) {
+    if (indicator.textContent !== phase) {
+      indicator.textContent = phase;
+      indicator.dataset.phase = phase === "دم" ? "inspiration" : phase === "بازدم" ? "expiration" : "low";
+    }
+  }
+  organMotion.updateBreath(sample);
 });
 
 function node(tag, text, className) {
@@ -90,12 +98,13 @@ function buildControls(definitions, selector, elements, values) {
   }
 }
 
-function updateControls() {
+function updateControls(heartRate) {
   const spontaneous = ["CPAP", "BILEVEL"].includes(settings.mode);
   for (const config of controlDefinitions) {
     const { input, output, wrapper, abbreviation } = controlElements.get(config.key);
-    input.value = settings[config.key];
-    const display = config.format?.(settings[config.key]) ?? settings[config.key];
+    const value = config.key === "heartRate" ? heartRate : settings[config.key];
+    input.value = value;
+    const display = config.format?.(value) ?? value;
     output.value = display;
     input.setAttribute("aria-valuetext", String(display));
     wrapper.hidden = Boolean(config.modes && !config.modes.includes(settings.mode));
@@ -112,17 +121,19 @@ function updateMonitor(metrics, scenario, mode) {
   setText("#metric-vt", format(metrics.tidalVolume));
   setText("#metric-ve", format(metrics.minuteVentilation, 1));
   setText("#metric-auto-peep", format(metrics.intrinsicPeep, 1));
+  setText("#monitor-rr", settings.rr);
   const seconds = Number.isFinite(metrics.expiratoryTime) ? format(metrics.expiratoryTime, 2) : "—";
   setText("#monitor-note", "زمان بازدم " + seconds + " ثانیه · " + mode.watch);
 }
 
-function updateLab(gas, scenario, condition) {
+function updateLab(gas, scenario, condition, heartRate) {
   setText("#gas-ph", format(gas.ph, 2));
   setText("#gas-paco2", format(gas.paco2, 1));
   const oxygenInRange = Number.isFinite(gas.pao2) && gas.pao2 > 0.5;
   setText("#gas-pao2", oxygenInRange ? format(gas.pao2) : "—");
   setText("#gas-hco3", format(gas.hco3, 1));
   setText("#gas-spo2", oxygenInRange ? format(gas.spo2) : "—");
+  setText("#monitor-spo2", oxygenInRange ? format(gas.spo2) : "—");
   find("#gas-note").hidden = oxygenInRange;
   let phState = "—";
   if (Number.isFinite(gas.ph)) {
@@ -130,14 +141,14 @@ function updateLab(gas, scenario, condition) {
   }
   setText("#ph-state", phState);
   setText("#cardiac-output", format(scenario.cardiacOutput, 1) + " L/min");
-  const heartRate = condition.id === "rapid-rhythm" ? 145 : 78;
   setText("#heart-rate", heartRate + " bpm");
-  find("#heart-pulse").style.setProperty("--beat-period", 60 / heartRate + "s");
+  setText("#monitor-heart-rate", heartRate);
+  organMotion.setHeartRate(heartRate);
+  organMotion.setCondition(condition.id);
   setText("#shunt-value", Number.isFinite(gas.effectiveShunt) ? format(gas.effectiveShunt * 100) + "%" : "—");
   setText("#alveolar-ventilation", Number.isFinite(gas.alveolarVentilation) ? format(gas.alveolarVentilation, 1) + " L/min" : "—");
   setText("#alveolar-oxygen", gas.alveolarOxygen > 0.5 ? format(gas.alveolarOxygen) + " mmHg" : "—");
   setText("#condition-description", condition.description);
-  find("#organ-image").dataset.condition = condition.id;
   find("#control-hco3").value = scenario.hco3;
   find("#value-hco3").value = format(scenario.hco3);
 }
@@ -149,8 +160,9 @@ function render() {
   if (bicarbonate !== null) scenario.hco3 = bicarbonate;
   const mode = modes.find(item => item.id === settings.mode) ?? modes[0];
   const { samples, metrics, gas } = simulate(scenario, settings);
+  const heartRate = settings.heartRate ?? (condition.id === "rapid-rhythm" ? 145 : 78);
 
-  updateControls();
+  updateControls(heartRate);
   for (const [key, { input, output }] of mechanicsElements) {
     input.value = scenario[key];
     output.value = format(scenario[key]);
@@ -165,7 +177,7 @@ function render() {
   source.textContent = base.source.label + " ↗";
   chart.replace(samples);
   updateMonitor(metrics, base, mode);
-  updateLab(gas, scenario, condition);
+  updateLab(gas, scenario, condition, heartRate);
 }
 
 function resetSettings() {
@@ -192,13 +204,21 @@ function showView(lessonVisible) {
   window.scrollTo(0, 0);
 }
 
+function showDeviceTab(active) {
+  for (const button of deviceTabs) {
+    const selected = button === active;
+    button.setAttribute("aria-pressed", String(selected));
+    document.getElementById(button.getAttribute("aria-controls")).hidden = !selected;
+  }
+}
+
 function setPaused(paused) {
   chart.setPaused(paused);
-  const name = paused ? "اجرای نمایش موج‌ها" : "توقف نمایش موج‌ها";
+  organMotion.setPaused(paused);
+  const name = paused ? "اجرای نمایش موج‌ها و اندام‌ها" : "توقف نمایش موج‌ها و اندام‌ها";
   pauseButton.title = name;
   pauseButton.setAttribute("aria-label", name);
   pauseButton.setAttribute("aria-pressed", String(paused));
-  find("#heart-pulse").style.animationPlayState = paused ? "paused" : "running";
   const status = find("#monitor-status");
   status.classList.toggle("paused", paused);
   status.lastElementChild.textContent = paused ? "متوقف" : "در حال اجرا";
@@ -279,6 +299,7 @@ setPaused(chart.paused);
 caseSelect.addEventListener("change", () => resetSettings());
 conditionSelect.addEventListener("change", () => {
   bicarbonate = null;
+  settings.heartRate = null;
   resetMechanics();
   render();
 });
@@ -294,5 +315,5 @@ find("#reset-monitor").addEventListener("click", () => resetSettings());
 pauseButton.addEventListener("click", () => setPaused(!chart.paused));
 find("#tab-simulator").addEventListener("click", () => showView(false));
 find("#tab-lesson").addEventListener("click", () => showView(true));
-find("#open-lesson").addEventListener("click", () => showView(true));
 find("#open-simulator").addEventListener("click", () => showView(false));
+for (const button of deviceTabs) button.addEventListener("click", () => showDeviceTab(button));

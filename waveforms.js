@@ -23,8 +23,7 @@ export function createWaveforms(onFrame) {
       if (!chart.canvas.clientWidth) continue;
       drawTrace(chart, samples, duration, phaseTime);
     }
-    const sampleIndex = Math.min(samples.length - 1, Math.floor(phaseTime / duration * (samples.length - 1)));
-    onFrame(samples[sampleIndex]);
+    onFrame(sampleAtTime(samples, phaseTime));
   }
 
   function tick(now) {
@@ -54,6 +53,17 @@ export function createWaveforms(onFrame) {
       return paused;
     },
   };
+}
+
+function sampleAtTime(samples, time) {
+  let first = 0;
+  let last = samples.length - 1;
+  while (first < last) {
+    const midpoint = Math.ceil((first + last) / 2);
+    if (samples[midpoint].time <= time) first = midpoint;
+    else last = midpoint - 1;
+  }
+  return samples[first];
 }
 
 function updateScale(chart, samples) {

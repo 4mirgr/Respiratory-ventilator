@@ -110,9 +110,11 @@ main { padding: 30px 0; min-height: 75vh; }
 }
 .secondary-button:hover { background: #1b424b; }
 .secondary-button span { margin-inline-start: 6px; }
-.workspace, .detail-grid { display: grid; gap: 16px; }
-.workspace { grid-template-columns: minmax(0, 2.3fr) minmax(290px, 1fr); align-items: start; }
-.detail-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 16px; }
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -130,7 +132,6 @@ main { padding: 30px 0; min-height: 75vh; }
   border-bottom: 1px solid var(--border);
 }
 .panel-header p { font-size: .79rem; color: var(--muted); line-height: 1.65; }
-.monitor { background: #0b1724; }
 .monitor-mode { display: inline-block; color: var(--cyan); margin-inline-end: 5px; font-weight: 700; }
 .monitor-actions { display: flex; align-items: center; gap: 11px; }
 .live-state { font-size: .77rem; color: var(--cyan); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
@@ -163,7 +164,7 @@ main { padding: 30px 0; min-height: 75vh; }
 #gas-note { padding-top: 8px; color: var(--amber); }
 .settings-body { padding: 12px 15px; }
 .pickers { display: grid; gap: 5px; }
-.pickers label, .anatomy-controls label { color: var(--muted); font-size: .82rem; }
+.pickers label { color: var(--muted); font-size: .82rem; }
 .pickers label:not(:first-child) { margin-top: 3px; }
 select {
   width: 100%;
@@ -192,14 +193,12 @@ select {
 }
 .phase { font-size: .82rem; color: var(--cyan); }
 .anatomy-image { position: relative; display: grid; place-items: center; height: 230px; background: #091522; overflow: hidden; }
-.anatomy-image img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: lighten; }
 .anatomy-value { position: absolute; inset-block-end: 12px; display: grid; gap: 3px; border: 1px solid #365064; background: #0c1a29e8; border-radius: 8px; padding: 5px 9px; min-width: 71px; }
 .anatomy-co { inset-inline-start: 12px; }
 .anatomy-shunt { inset-inline-end: 12px; }
 .anatomy-value span { color: var(--muted); font-size: .68rem; }
 .anatomy-value strong { font: 700 .84rem ui-monospace, monospace; color: var(--cyan); }
-.anatomy-controls { padding: 12px 16px; display: grid; gap: 6px; }
-.anatomy-controls p, .case-context p, .chemistry p { font-size: .82rem; color: var(--muted); line-height: 1.75; }
+.case-context p, .chemistry p { font-size: .82rem; color: var(--muted); line-height: 1.75; }
 .gas-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: #213345; border-bottom: 1px solid #213345; }
 .gas-metrics > div { display: grid; gap: 3px; background: #0e1a29; padding: 9px 8px; text-align: center; }
 .gas-metrics span, .gas-metrics small { font-size: .69rem; color: var(--muted); }
@@ -243,12 +242,10 @@ select {
 
 @media (max-width: 950px) {
   .shell { width: calc(100% - 36px); }
-  .workspace { grid-template-columns: minmax(0, 1.75fr) minmax(255px, 1fr); }
   .metric { padding-inline: 7px; }
 }
 @media (max-width: 700px) {
-  .workspace, .detail-grid, .lesson-grid { grid-template-columns: minmax(0, 1fr); }
-  .settings { grid-row: auto; }
+  .lesson-grid { grid-template-columns: minmax(0, 1fr); }
   .wave canvas { height: 80px; }
   .page-intro { align-items: start; }
   .header-inner { gap: 10px; }
@@ -276,8 +273,6 @@ select {
 }
 
 .bicarbonate-control { margin-top: 3px; }
-.anatomy-image img[data-condition="pulmonary-edema"] { filter: saturate(1.25) hue-rotate(-8deg); }
-.anatomy-image img[data-condition="low-output"] { filter: brightness(.88); }
 
 .icon-button { display: grid; place-items: center; }
 .playback-icon { width: 10px; height: 12px; border-inline: 3px solid currentColor; }
@@ -287,12 +282,6 @@ select {
   border: 0;
   border-block: 6px solid transparent;
   border-left: 9px solid currentColor;
-}
-.heart-pulse { display: inline-block; vertical-align: middle; width: 8px; height: 8px; border-radius: 50%; background: #ef8c9e; animation: heartbeat var(--beat-period, .77s) infinite; }
-@keyframes heartbeat {
-  0%, 100% { transform: scale(.72); }
-  24% { transform: scale(1.28); box-shadow: 0 0 8px #ef8c9e90; }
-  40% { transform: scale(.78); }
 }
 .alveolar-panel { display: grid; grid-template-columns: minmax(84px, .88fr) minmax(0, 1.5fr); gap: 9px; align-items: center; padding: 10px 13px; background: #091522; border-bottom: 1px solid var(--border); }
 .alveolar-panel img { display: block; width: 100%; height: auto; mix-blend-mode: lighten; }
