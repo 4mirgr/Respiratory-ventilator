@@ -1,7 +1,7 @@
-import { lesson, scenarios, conditions, modes } from "./content.js";
-import { simulate } from "./model.js";
-import { createWaveforms } from "./waveforms.js";
-import { createOrganMotion } from "./organ-motion.js";
+import { lesson, scenarios, conditions, modes } from "./content.js?v=3";
+import { simulate } from "./model.js?v=3";
+import { createWaveforms } from "./waveforms.js?v=3";
+import { createOrganMotion } from "./organ-motion.js?v=3";
 
 const find = selector => document.querySelector(selector);
 const defaults = { mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8, heartRate: null };
@@ -31,6 +31,7 @@ const breathIndicators = [find("#breath-phase"), find("#monitor-breath-phase")];
 const organMotion = createOrganMotion();
 const deviceTabs = [...document.querySelectorAll(".device-navigation button")];
 let bicarbonate = null;
+let renderedScenario = null;
 
 const chart = createWaveforms(sample => {
   const phase = sample.flow > 0.75 ? "دم" : sample.flow < -0.75 ? "بازدم" : "جریان کم";
@@ -52,6 +53,14 @@ function node(tag, text, className) {
 
 function setText(selector, value) {
   find(selector).textContent = value;
+}
+
+function makeSourceLink(source) {
+  const link = node("a", source.label);
+  link.href = source.url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  return link;
 }
 
 function fillSelect(select, items, label) {
@@ -100,6 +109,7 @@ function buildControls(definitions, selector, elements, values) {
 
 function updateControls(heartRate) {
   const spontaneous = ["CPAP", "BILEVEL"].includes(settings.mode);
+  const intermittent = settings.mode === "SIMV";
   for (const config of controlDefinitions) {
     const { input, output, wrapper, abbreviation } = controlElements.get(config.key);
     const value = config.key === "heartRate" ? heartRate : settings[config.key];
@@ -108,7 +118,12 @@ function updateControls(heartRate) {
     output.value = display;
     input.setAttribute("aria-valuetext", String(display));
     wrapper.hidden = Boolean(config.modes && !config.modes.includes(settings.mode));
-    if (config.key === "rr") input.setAttribute("aria-label", spontaneous ? "تعداد تنفس خودبه‌خودی مدل" : config.name);
+    if (config.key === "rr") {
+      const label = spontaneous ? "تعداد تنفس خودبه‌خودی مدل" : intermittent ? "تعداد نفس اجباری تنظیم‌شده" : config.name;
+      abbreviation.textContent = intermittent ? "RR set" : config.label;
+      abbreviation.title = label;
+      input.setAttribute("aria-label", label);
+    }
     if (config.key === "peep") abbreviation.textContent = settings.mode === "BILEVEL" ? "EPAP" : settings.mode === "CPAP" ? "CPAP" : config.label;
   }
 }
@@ -121,7 +136,7 @@ function updateMonitor(metrics, scenario, mode) {
   setText("#metric-vt", format(metrics.tidalVolume));
   setText("#metric-ve", format(metrics.minuteVentilation, 1));
   setText("#metric-auto-peep", format(metrics.intrinsicPeep, 1));
-  setText("#monitor-rr", settings.rr);
+  setText("#monitor-rr", format(metrics.breathsPerMinute, 1).replace(/\.0$/, ""));
   const seconds = Number.isFinite(metrics.expiratoryTime) ? format(metrics.expiratoryTime, 2) : "—";
   setText("#monitor-note", "زمان بازدم " + seconds + " ثانیه · " + mode.watch);
 }
@@ -129,12 +144,17 @@ function updateMonitor(metrics, scenario, mode) {
 function updateLab(gas, scenario, condition, heartRate) {
   setText("#gas-ph", format(gas.ph, 2));
   setText("#gas-paco2", format(gas.paco2, 1));
-  const oxygenInRange = Number.isFinite(gas.pao2) && gas.pao2 > 0.5;
-  setText("#gas-pao2", oxygenInRange ? format(gas.pao2) : "—");
+  setText("#gas-pao2", format(gas.pao2));
   setText("#gas-hco3", format(gas.hco3, 1));
-  setText("#gas-spo2", oxygenInRange ? format(gas.spo2) : "—");
-  setText("#monitor-spo2", oxygenInRange ? format(gas.spo2) : "—");
-  find("#gas-note").hidden = oxygenInRange;
+  setText("#gas-spo2", format(gas.spo2));
+  setText("#monitor-spo2", format(gas.spo2));
+  const gasNote = find("#gas-note");
+  const gasMessage = {
+    "insufficient-ventilation": "در این وضعیت، تهویهٔ مؤثر برای برآورد گازهای خون در حالت پایدار کافی نیست.",
+    "oxygen-extraction-limit": "در این وضعیت مدل نمی‌تواند اکسیژن شریانی را برآورد کند.",
+  }[gas.status] ?? "";
+  if (gasMessage !== gasNote.textContent) gasNote.textContent = gasMessage;
+  gasNote.hidden = !gasMessage;
   let phState = "—";
   if (Number.isFinite(gas.ph)) {
     phState = gas.ph < 7.35 ? "اسیدمی" : gas.ph > 7.45 ? "آلکالمی" : "محدودهٔ معمول";
@@ -147,10 +167,38 @@ function updateLab(gas, scenario, condition, heartRate) {
   organMotion.setCondition(condition.id);
   setText("#shunt-value", Number.isFinite(gas.effectiveShunt) ? format(gas.effectiveShunt * 100) + "%" : "—");
   setText("#alveolar-ventilation", Number.isFinite(gas.alveolarVentilation) ? format(gas.alveolarVentilation, 1) + " L/min" : "—");
-  setText("#alveolar-oxygen", gas.alveolarOxygen > 0.5 ? format(gas.alveolarOxygen) + " mmHg" : "—");
+  setText("#alveolar-oxygen", Number.isFinite(gas.alveolarOxygen) ? format(gas.alveolarOxygen) + " mmHg" : "—");
   setText("#condition-description", condition.description);
   find("#control-hco3").value = scenario.hco3;
   find("#value-hco3").value = format(scenario.hco3);
+}
+
+function renderScenario(scenario) {
+  if (renderedScenario === scenario.id) return;
+  renderedScenario = scenario.id;
+  setText("#case-title", scenario.title);
+  setText("#case-summary", scenario.summary);
+  setText("#case-clinic", scenario.clinic);
+
+  const { training } = scenario;
+  const source = find("#case-source");
+  source.href = scenario.source.url;
+  source.textContent = scenario.source.label + " ↗";
+  source.hidden = Boolean(training);
+  find("#case-training").hidden = !training;
+  if (!training) return;
+
+  setText("#case-presentation", training.presentation);
+  setText("#case-challenge", training.challenge);
+  setText("#case-answer", training.answer);
+  setText("#case-limitations", training.limitations);
+  find("#case-answer-detail").open = false;
+  const references = training.references.map(reference => {
+    const item = node("li");
+    item.append(makeSourceLink(reference), node("p", reference.note));
+    return item;
+  });
+  find("#case-training-references").replaceChildren(...references);
 }
 
 function render() {
@@ -167,14 +215,11 @@ function render() {
     input.value = scenario[key];
     output.value = format(scenario[key]);
   }
+  find("#mechanics-override-note").hidden = !Object.keys(mechanicsOverrides).length;
   setText("#mode-code", mode.short);
   setText("#mode-description", mode.description);
-  setText("#case-title", base.title);
-  setText("#case-summary", base.summary);
-  setText("#case-clinic", base.clinic);
-  const source = find("#case-source");
-  source.href = base.source.url;
-  source.textContent = base.source.label + " ↗";
+  renderScenario(base);
+  organMotion.setBreathingPattern(samples[0]);
   chart.replace(samples);
   updateMonitor(metrics, base, mode);
   updateLab(gas, scenario, condition, heartRate);
@@ -251,11 +296,7 @@ function buildLesson() {
   const sources = find("#lesson-sources");
   for (const source of lesson.sources) {
     const item = node("li");
-    const link = node("a", source.label);
-    link.href = source.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    item.append(link);
+    item.append(makeSourceLink(source));
     sources.append(item);
   }
   buildQuiz();
@@ -298,9 +339,7 @@ setPaused(chart.paused);
 
 caseSelect.addEventListener("change", () => resetSettings());
 conditionSelect.addEventListener("change", () => {
-  bicarbonate = null;
   settings.heartRate = null;
-  resetMechanics();
   render();
 });
 modeSelect.addEventListener("change", () => {
@@ -316,4 +355,9 @@ pauseButton.addEventListener("click", () => setPaused(!chart.paused));
 find("#tab-simulator").addEventListener("click", () => showView(false));
 find("#tab-lesson").addEventListener("click", () => showView(true));
 find("#open-simulator").addEventListener("click", () => showView(false));
+find("#case-open-monitor").addEventListener("click", () => {
+  const monitor = find("#device-monitor-tab");
+  showDeviceTab(monitor);
+  monitor.focus();
+});
 for (const button of deviceTabs) button.addEventListener("click", () => showDeviceTab(button));

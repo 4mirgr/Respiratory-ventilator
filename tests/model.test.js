@@ -39,6 +39,15 @@ test("higher resistance increases the peak-to-plateau gradient in VC", () => {
   assert.ok(Math.abs(obstructed.tidalVolume - baseline.tidalVolume) < 1);
 });
 
+test("short VC inspirations show the final pressure before the expiration switch", () => {
+  const stiff = { ...scenario, compliance: 15, resistance: 10 };
+  const { samples, metrics } = simulate(stiff, { ...settings, rr: 35, vt: 800, ie: 5 });
+  const plottedPeak = Math.max(...samples.map(sample => sample.pressure));
+
+  assert.ok(Math.abs(metrics.peak - plottedPeak) < 0.001);
+  assert.ok(samples.every((sample, index) => index === 0 || sample.time > samples[index - 1].time));
+});
+
 test("shorter expiration increases intrinsic PEEP and leaves flow at the end of expiration", () => {
   const obstructed = { ...scenario, compliance: 80, resistance: 25 };
   const longer = simulate(obstructed, { ...settings, rr: 12, ie: 4 });
@@ -128,9 +137,58 @@ test("SIMV includes mandatory and pressure-supported spontaneous breaths", () =>
   const moreSupport = simulate(scenario, { ...settings, mode: "SIMV", pressureSupport: 12 });
   assert.ok(simv.samples.some(({ pressure }) => pressure === settings.peep + settings.pressureSupport));
   assert.ok(simv.metrics.plateau > settings.peep);
+  assert.equal(simv.metrics.breathsPerMinute, settings.rr * 1.5);
   assert.ok(moreSupport.metrics.minuteVentilation > simv.metrics.minuteVentilation);
   assert.ok(simv.samples.at(-1).time >= 14);
   assert.ok(simv.samples.every((point, index) => index === 0 || point.time > simv.samples[index - 1].time));
+});
+
+test("spontaneous bilevel does not deliver timed backup breaths during apnea", () => {
+  const apnea = simulate({ ...scenario, effort: 0 }, { ...settings, mode: "BILEVEL" });
+
+  assert.equal(apnea.metrics.tidalVolume, 0);
+  assert.equal(apnea.metrics.breathsPerMinute, 0);
+  assert.equal(apnea.metrics.expiratoryTime, null);
+  assert.equal(apnea.gas.status, "insufficient-ventilation");
+  assert.ok(apnea.samples.every(sample => sample.pressure === settings.peep && sample.flow === 0));
+});
+
+test("SIMV preserves the mandatory pattern when there is no spontaneous effort", () => {
+  const passive = { ...scenario, effort: 0 };
+  const vc = simulate(passive, settings);
+
+  for (const pressureSupport of [0, 8]) {
+    const simv = simulate(passive, { ...settings, mode: "SIMV", pressureSupport });
+    assert.deepEqual(simv.samples, vc.samples);
+    assert.deepEqual(simv.metrics, vc.metrics);
+    assert.equal(simv.metrics.breathsPerMinute, settings.rr);
+  }
+});
+
+test("weak spontaneous effort preserves measured mechanics when gas exchange has no steady estimate", () => {
+  const weakEffort = { ...scenario, effort: 1, compliance: 25 };
+  const { metrics, gas } = simulate(weakEffort, { ...settings, mode: "CPAP", fio2: 21 });
+
+  assert.equal(metrics.breathsPerMinute, settings.rr);
+  assert.ok(metrics.tidalVolume > 0);
+  assert.ok(gas.alveolarVentilation > 0.05);
+  assert.equal(gas.status, "insufficient-ventilation");
+  for (const key of ["ph", "paco2", "pao2", "spo2", "alveolarOxygen"]) assert.equal(gas[key], null);
+});
+
+test("oxygen estimates flag an oxygen demand exceeding modeled circulatory delivery", () => {
+  const lowOutput = { ...scenario, shunt: 0.5, cardiacOutput: 2, co2Production: 250 };
+  const highOxygen = { ...settings, fio2: 60 };
+  const limitedGas = simulate(lowOutput, highOxygen).gas;
+  const restoredGas = simulate({ ...lowOutput, cardiacOutput: 6 }, highOxygen).gas;
+
+  assert.equal(limitedGas.status, "oxygen-extraction-limit");
+  assert.equal(limitedGas.pao2, null);
+  assert.equal(limitedGas.spo2, null);
+  assert.ok(limitedGas.alveolarOxygen > 0);
+  assert.equal(limitedGas.paco2, restoredGas.paco2);
+  assert.equal(restoredGas.status, "ok");
+  assert.ok(restoredGas.pao2 > 0);
 });
 
 test("traces cover whole ventilation patterns and meet their starting state at the wrap", () => {

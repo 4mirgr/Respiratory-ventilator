@@ -23,8 +23,9 @@ function breathPattern(mode, cycle, inspiration, drivingPressure, support, effor
     case "CPAP":
       return [{ ...spontaneous, pressure: 0, spontaneous: true }];
     case "BILEVEL":
-      return [{ ...spontaneous, spontaneous: true }];
+      return [{ ...spontaneous, pressure: effort > 0 ? drivingPressure : 0, spontaneous: true }];
     case "SIMV": {
+      if (effort === 0) return [volumeBreath];
       // The deterministic patient takes one spontaneous breath between alternate mandatory breaths.
       const shortCycle = cycle / 2;
       const shortInspiration = Math.min(inspiration, shortCycle * 0.85);
@@ -95,7 +96,21 @@ function runPhase(breath, mechanics, inspiring, startVolume, startTime, samples)
   }
 
   if (constantFlow !== null) {
-    peak = Math.max(peak, peep + volume / compliance + resistance * constantFlow);
+    const resistivePressure = resistance * constantFlow;
+    peak = Math.max(peak, peep + volume / compliance + resistivePressure);
+    if (samples) {
+      // Preserve the peak on the waveform without duplicating the expiration timestamp.
+      const switchOffset = 0.000001;
+      const edgeVolume = volume - constantFlow * switchOffset;
+      const alveolarPressure = peep + edgeVolume / compliance;
+      samples.push({
+        time: startTime + duration - switchOffset,
+        pressure: alveolarPressure + resistivePressure,
+        flow: constantFlow * 60,
+        volume: edgeVolume * 1000,
+        alveolarPressure,
+      });
+    }
   }
   return { volume, inhaled, peak };
 }
@@ -108,6 +123,7 @@ function runPattern(pattern, mechanics, startVolume, samples) {
   let plateau = null;
   let intrinsicPeep = 0;
   let expiratoryTime = 0;
+  let breaths = 0;
 
   for (const breath of pattern) {
     const inspiration = runPhase(breath, mechanics, true, volume, time, samples);
@@ -119,20 +135,25 @@ function runPattern(pattern, mechanics, startVolume, samples) {
       time + breath.inspiration,
       samples,
     );
+    const breathVolume = inspiration.inhaled + expiration.inhaled;
+    inhaled += breathVolume;
+    peak = Math.max(peak, inspiration.peak, expiration.peak);
+    expiratoryTime += breath.cycle;
+    if (breathVolume > 0) {
+      breaths++;
+      expiratoryTime -= breath.inspiration;
+      intrinsicPeep = Math.max(intrinsicPeep, volume / mechanics.compliance);
+      if (!breath.spontaneous) {
+        // Estimated static pressure at end inspiration after flow falls to zero.
+        const staticPressure = mechanics.peep + inspiration.volume / mechanics.compliance;
+        plateau = Math.max(plateau ?? mechanics.peep, staticPressure);
+      }
+    }
     time += breath.cycle;
     volume = expiration.volume;
-    inhaled += inspiration.inhaled + expiration.inhaled;
-    peak = Math.max(peak, inspiration.peak, expiration.peak);
-    if (!breath.spontaneous) {
-      // Estimated static pressure at end inspiration after flow falls to zero.
-      const staticPressure = mechanics.peep + inspiration.volume / mechanics.compliance;
-      plateau = Math.max(plateau ?? mechanics.peep, staticPressure);
-    }
-    intrinsicPeep = Math.max(intrinsicPeep, expiration.volume / mechanics.compliance);
-    expiratoryTime += breath.cycle - breath.inspiration;
   }
 
-  return { time, volume, inhaled, peak, plateau, intrinsicPeep, expiratoryTime };
+  return { time, volume, inhaled, peak, plateau, intrinsicPeep, expiratoryTime, breaths };
 }
 
 function traceSamples(cycleSamples, cycleDuration) {
@@ -179,26 +200,32 @@ function estimateGas(scenario, minuteVentilation, fio2, peep) {
   // An illustrative pressure–recruitment relation reduces only the recruitable shunt.
   const effectiveShunt = shuntAtZeroPeep * (1 - recruitability * (1 - Math.exp(-peep / 10)));
   const gasExchange = { hco3, alveolarVentilation, effectiveShunt };
-  if (alveolarVentilation < 0.05) {
-    return { ...gasExchange, ph: null, paco2: null, pao2: null, spo2: null, alveolarOxygen: null };
+  const co2Production = bounded(scenario.co2Production, 200, 50, 600);
+  const paco2 = alveolarVentilation >= 0.05 ? 0.863 * co2Production / alveolarVentilation : null;
+  const alveolarOxygen = paco2 === null
+    ? null
+    : fio2 * SEA_LEVEL_DRY_GAS_PRESSURE - paco2 * (fio2 + (1 - fio2) / RESPIRATORY_QUOTIENT);
+  if (alveolarOxygen === null || alveolarOxygen <= 0) {
+    return {
+      ...gasExchange, status: "insufficient-ventilation",
+      ph: null, paco2: null, pao2: null, spo2: null, alveolarOxygen: null,
+    };
   }
 
-  const co2Production = bounded(scenario.co2Production, 200, 50, 600);
-  const cardiacOutput = bounded(scenario.cardiacOutput, 5, 0.5, 15);
-  const paco2 = 0.863 * co2Production / alveolarVentilation;
   const ph = 6.1 + Math.log10(hco3 / (0.03 * paco2));
-  const alveolarOxygen = Math.max(
-    0,
-    fio2 * SEA_LEVEL_DRY_GAS_PRESSURE - paco2 * (fio2 + (1 - fio2) / RESPIRATORY_QUOTIENT),
-  );
+  const bloodGas = { ...gasExchange, ph, paco2, alveolarOxygen };
+  const cardiacOutput = bounded(scenario.cardiacOutput, 5, 0.5, 15);
   const oxygenExtraction = co2Production / (RESPIRATORY_QUOTIENT * 10 * cardiacOutput);
-  const arterialContent = Math.max(
-    0,
-    oxygenContent(alveolarOxygen) - (effectiveShunt / (1 - effectiveShunt)) * oxygenExtraction,
-  );
+  const capillaryContent = oxygenContent(alveolarOxygen);
+  // Fick's principle and shunt mixing jointly imply this mixed-venous content.
+  const venousContent = capillaryContent - oxygenExtraction / (1 - effectiveShunt);
+  if (venousContent <= 0) {
+    return { ...bloodGas, status: "oxygen-extraction-limit", pao2: null, spo2: null };
+  }
+  const arterialContent = (1 - effectiveShunt) * capillaryContent + effectiveShunt * venousContent;
   const pao2 = pressureFromContent(arterialContent, alveolarOxygen);
   const spo2 = 100 * oxygenSaturation(pao2);
-  return { ...gasExchange, ph, paco2, pao2, spo2, alveolarOxygen };
+  return { ...bloodGas, status: "ok", pao2, spo2 };
 }
 
 /**
@@ -208,19 +235,20 @@ function estimateGas(scenario, minuteVentilation, fio2, peep) {
  * volume. Flow is in L/min, pressure is in cmH2O, and time is in seconds.
  * The trace covers whole patterns for at least 14 seconds and closes at its
  * initial state for continuous playback.
- * A scheduled effort drives spontaneous breaths. Bilevel is pressure-assisted
- * breathing. SIMV alternates mandatory VC timing with one scheduled supported
- * spontaneous breath in every two mandatory cycles. Triggering, leaks, apnea
- * backup, variable patient effort, and feedback controllers are absent.
+ * A scheduled effort drives spontaneous breaths. Bilevel provides spontaneous
+ * pressure assistance. With effort, SIMV adds one scheduled supported spontaneous
+ * breath in every two mandatory cycles. Trigger dynamics, leaks, apnea backup,
+ * variable patient effort, and feedback controllers are absent.
  *
  * Peak and intrinsic PEEP are cycle maxima. Plateau is a static estimate from
- * passive mandatory breaths, not a hold measurement. VT and expiratory time
- * are mean per-breath values across the pattern. Gas values approximate steady
+ * passive mandatory breaths, not a hold measurement. Rate, VT and average
+ * expiratory time reflect breaths with inspired flow. Gas values approximate steady
  * state with fixed bicarbonate, fixed hemoglobin and oxygen affinity, sea-level
  * pressure, and steady-state oxygen content mixing. Alveolar oxygen is in mmHg,
  * alveolar ventilation is in L/min, and the effective shunt is a fraction.
- * With very low alveolar ventilation, pH and gas tensions/saturation are null
- * because a useful numeric steady state cannot be represented.
+ * Insufficient ventilation for positive alveolar oxygen returns no steady-state
+ * estimates. Oxygen extraction beyond the model's available delivery disables
+ * the arterial oxygen estimates.
  * The results apply to fictional educational examples.
  */
 export function simulate(scenario = {}, settings = {}) {
@@ -253,9 +281,10 @@ export function simulate(scenario = {}, settings = {}) {
     peak: settled.peak,
     plateau: settled.plateau,
     intrinsicPeep: settled.intrinsicPeep,
-    tidalVolume: settled.inhaled * 1000 / pattern.length,
+    tidalVolume: settled.breaths === 0 ? 0 : settled.inhaled * 1000 / settled.breaths,
     minuteVentilation,
-    expiratoryTime: settled.expiratoryTime / pattern.length,
+    breathsPerMinute: settled.breaths * 60 / settled.time,
+    expiratoryTime: settled.breaths === 0 ? null : settled.expiratoryTime / settled.breaths,
   };
   return {
     samples: traceSamples(cycleSamples, settled.time),

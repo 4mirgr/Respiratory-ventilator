@@ -31,6 +31,13 @@ export function createOrganMotion() {
   let previousHeartRate = null;
 
   return {
+    setBreathingPattern(firstSample) {
+      lastDirection = 0;
+      endExpiratoryVolume = Math.max(0, firstSample.volume);
+      previousVolume = null;
+      previousScale = null;
+    },
+
     updateBreath(sample) {
       if (!Number.isFinite(sample?.volume) || (paused && previousScale !== null)) return;
       const volume = Math.max(0, sample.volume);

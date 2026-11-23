@@ -270,6 +270,14 @@ body:has(#simulator-view:not([hidden])) .header-inner {
 .device-settings .settings-body > label { display: block; margin-bottom: 5px; color: #bccdda; font-size: .82rem; }
 #condition-description { margin-top: 5px; color: #b5c7d7; font-size: .79rem; line-height: 1.65; }
 .device-settings .case-context, .device-settings .monitor-note, .device-settings .estimate-note { padding-inline: 0; }
+.case-training { display: grid; gap: 6px; border-top: 1px solid var(--border); padding-top: 9px; margin-top: 4px; }
+.case-training h4, .case-training h5 { margin: 0; font-size: .84rem; }
+.case-training .case-challenge { color: var(--foreground); }
+.case-training button { justify-self: start; }
+.case-training summary { color: var(--cyan); cursor: pointer; font-size: .83rem; }
+.case-training details p { margin-block: 5px; }
+.case-training ul { margin: 0; padding-inline-start: 16px; }
+.case-training li + li { margin-top: 4px; }
 .device-physiology .detail-grid {
   margin: 0;
   gap: 6px;

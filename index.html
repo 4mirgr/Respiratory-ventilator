@@ -7,10 +7,10 @@
   <meta name="description" content="آموزش فارسی فیزیولوژی تنفس و تمرین با ونتیلاتور شبیه‌سازی‌شده">
   <title>آزمایشگاه تنفس | شبیه‌ساز ونتیلاتور</title>
   <link rel="icon" href="./assets/favicon.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./organ-motion.css">
-  <link rel="stylesheet" href="./device.css">
-  <script type="module" src="./app.js"></script>
+  <link rel="stylesheet" href="./styles.css?v=3">
+  <link rel="stylesheet" href="./organ-motion.css?v=3">
+  <link rel="stylesheet" href="./device.css?v=3">
+  <script type="module" src="./app.js?v=3"></script>
 </head>
 <body>
   <header class="site-header">
@@ -74,7 +74,7 @@
                 <div id="monitor-organ-image" class="organ-display organ-display-compact" role="img" aria-label="نمای متحرک قلب در مرکز ریه‌ها"></div>
                 <div class="organ-readout" dir="ltr">
                   <div class="heart-readout"><span>HR</span><strong id="monitor-heart-rate">—</strong><small>bpm</small></div>
-                  <div><span>RR</span><strong id="monitor-rr">—</strong><small>/min</small></div>
+                  <div title="تعداد کل نفس‌های مدل در دقیقه"><span>RR</span><strong id="monitor-rr">—</strong><small>/min</small></div>
                 </div>
               </div>
               <div class="monitor-metrics">
@@ -108,11 +108,25 @@
               <select id="condition-select"></select>
               <p id="condition-description"></p>
               <div id="mechanic-controls" class="controls" aria-label="مکانیک بیمار"></div>
+              <p id="mechanics-override-note" class="estimate-note" hidden>مقادیر دستی مکانیک در مقایسهٔ شرایط همراه ثابت می‌مانند.</p>
               <div class="case-context">
                 <h3 id="case-title"></h3>
                 <p id="case-summary"></p>
                 <p id="case-clinic"></p>
                 <a id="case-source" target="_blank" rel="noopener noreferrer">مرجع سناریو ↗</a>
+                <section id="case-training" class="case-training" aria-labelledby="case-training-title" hidden>
+                  <h4 id="case-training-title">تمرین بالینی</h4>
+                  <p id="case-presentation"></p>
+                  <p id="case-challenge" class="case-challenge"></p>
+                  <button id="case-open-monitor" type="button" class="text-button">رفتن به مانیتور</button>
+                  <details id="case-answer-detail">
+                    <summary>دیدن پاسخ و توضیح</summary>
+                    <p id="case-answer"></p>
+                    <p id="case-limitations"></p>
+                  </details>
+                  <h5>منابع این تمرین</h5>
+                  <ul id="case-training-references"></ul>
+                </section>
               </div>
             </div>
           </section>
@@ -146,7 +160,7 @@
                   <div><span dir="ltr">HCO₃⁻</span><strong id="gas-hco3" dir="ltr">—</strong><small dir="ltr">mmol/L</small></div>
                   <div><span dir="ltr">SpO₂</span><strong id="gas-spo2" dir="ltr">—</strong><small>%</small></div>
                 </div>
-                <p id="gas-note" class="estimate-note" hidden>در این تنظیم، تهویه یا اکسیژن آلوئولی بیرون از دامنهٔ قابل تفسیر مدل است.</p>
+                <p id="gas-note" class="estimate-note" role="status" hidden></p>
                 <div class="alveolar-panel">
                   <img src="./assets/alveoli.webp" alt="نمای شماتیک خوشهٔ آلوئول و مویرگ‌های اطراف" width="450" height="300">
                   <div>
