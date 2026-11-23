@@ -178,6 +178,7 @@ function updateControls(heartRate) {
 function updateMonitor(metrics, scenario, mode) {
   setText("#monitor-mode", mode.short);
   setText("#monitor-case", scenario.title);
+  find("#monitor-case").title = scenario.title;
   setText("#metric-peak", format(metrics.peak, 1));
   setText("#metric-plateau", format(metrics.plateau, 1));
   setText("#metric-vt", format(metrics.tidalVolume));

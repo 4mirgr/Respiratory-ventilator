@@ -484,6 +484,9 @@ body:has(#simulator-view:not([hidden])) main {
   .device-heading { flex: 1; align-items: flex-start; flex-direction: column; gap: 2px; }
   .device-heading h1 { font-size: .86rem; }
   .device-patient { font-size: .68rem; gap: 4px; overflow-wrap: anywhere; }
+  .device-heading .device-patient { max-width: 100%; }
+  #monitor-case { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #airway-status, .device-heading .monitor-mode { flex: none; white-space: nowrap; }
   .device-heading .monitor-mode { padding: 3px 4px; }
   .device-header .monitor-actions { gap: 4px; }
   .device-header .monitor-actions .live-state { font-size: .63rem; }
@@ -579,6 +582,8 @@ body:has(#simulator-view:not([hidden])) main {
   .airway-controls .pickers select { min-height: 34px; }
   .airway-editor > p { font-size: .8rem; line-height: 1.45; }
   .airway-tube { block-size: 29px; }
+  #airway-control-group .setting { padding-block: 4px; }
+  #airway-control-group .setting label { min-height: 18px; }
   #lesson-view .volume-entry { grid-template-columns: 42px minmax(0, 1fr) auto; }
   #lesson-view .volume-entry h3 { font-size: .83rem; }
   #lesson-view .volume-entry strong { font-size: .78rem; }
