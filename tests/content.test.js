@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { modes, scenarios } from "../content.js";
-import { simulate } from "../model.js";
+import { airwayTraining, modes, scenarios } from "../content.js";
+import { airwayStates, simulate } from "../model.js";
 
 const guidedCases = [
   "asthma",
@@ -11,6 +11,11 @@ const guidedCases = [
   "neuromuscular-weakness",
   "sepsis-acidosis",
 ];
+
+test("all airway choices map to a modeled state and have teaching descriptions", () => {
+  assert.deepEqual(airwayTraining.states.map(state => state.id).sort(), Object.keys(airwayStates).sort());
+  for (const state of airwayTraining.states) assert.ok(state.title && state.description);
+});
 
 test("guided scenarios open in a supported mode and include a sourced exercise", () => {
   assert.equal(new Set(scenarios.map(scenario => scenario.id)).size, scenarios.length);

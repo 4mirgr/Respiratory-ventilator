@@ -1,40 +1,56 @@
+body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  block-size: 100vh;
+  block-size: 100dvh;
+}
 body:has(#simulator-view:not([hidden])) {
   background: radial-gradient(ellipse at 51% 30%, #253545 0, #121e2a 50%, #090f18 92%);
 }
-body:has(#simulator-view:not([hidden])) main {
-  width: min(100%, 1536px);
-  padding-block: 0;
+main.shell {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
 }
-body:has(#simulator-view:not([hidden])) .site-header {
+body:has(#simulator-view:not([hidden])) main {
+  width: min(100%, 1800px);
+}
+.site-header {
   background: #0b1420eb;
 }
-body:has(#simulator-view:not([hidden])) .header-inner {
+.header-inner {
   min-height: 53px;
 }
+.fullscreen-button { margin-inline-start: auto; }
 
+#simulator-view, .device-shell { block-size: 100%; }
 .device-shell {
   position: relative;
   isolation: isolate;
-  aspect-ratio: 3 / 2;
   margin-inline: auto;
+}
+.device-hardware-frame {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
 }
 .device-hardware {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  inset: -16% -9% auto auto;
+  width: 118%;
+  height: 152%;
 }
 .device-screen {
   position: absolute;
-  inset: 16.9% 16.28% 29.59% 15.23%;
+  inset: 9.69% 10.21% 8.98% 8.97%;
   direction: rtl;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas: "heading" "navigation" "display" "controls";
   border: 1px solid #243642;
   border-radius: 10px;
-  overflow: hidden;
   min-width: 0;
   min-height: 0;
   color: #e4edf3;
@@ -50,6 +66,8 @@ body:has(#simulator-view:not([hidden])) .header-inner {
   padding: 7px 11px;
   background: #142430;
   border-bottom: 1px solid #2a4051;
+  border-start-start-radius: 9px;
+  border-start-end-radius: 9px;
 }
 .device-heading, .device-patient {
   display: flex;
@@ -66,6 +84,7 @@ body:has(#simulator-view:not([hidden])) .header-inner {
   font-size: .74rem;
   line-height: 1.25;
 }
+.device-patient { flex-wrap: wrap; }
 .device-heading .monitor-mode {
   margin: 0;
   padding: 4px 6px;
@@ -82,7 +101,8 @@ body:has(#simulator-view:not([hidden])) .header-inner {
 .device-header .text-button { padding: 4px 7px; }
 .device-navigation {
   grid-area: navigation;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 3px;
   padding-inline: 7px;
   background: #0c1823;
@@ -95,7 +115,8 @@ body:has(#simulator-view:not([hidden])) .header-inner {
   background: transparent;
   color: #aebfcc;
   font-size: .76rem;
-  white-space: nowrap;
+  line-height: 1.25;
+  min-height: 33px;
 }
 .device-navigation button[aria-pressed="true"] {
   background: #122c32;
@@ -109,10 +130,7 @@ body:has(#simulator-view:not([hidden])) .header-inner {
   grid-area: display;
   min-width: 0;
   min-height: 0;
-  scrollbar-width: thin;
-  scrollbar-color: #456171 #101c25;
 }
-.device-settings, .device-physiology { overflow: auto; }
 .monitor-layout {
   display: grid;
   direction: ltr;
@@ -249,6 +267,8 @@ body:has(#simulator-view:not([hidden])) .header-inner {
   padding: 5px;
   border-top: 1px solid #304655;
   background: #152632;
+  border-end-start-radius: 9px;
+  border-end-end-radius: 9px;
 }
 .device-screen .device-controls .setting {
   padding: 3px 6px;
@@ -262,127 +282,304 @@ body:has(#simulator-view:not([hidden])) .header-inner {
 .device-screen .device-controls .setting:has(#control-heartRate) output { color: #ffabb8; }
 .device-screen #control-heartRate { accent-color: #f28fa0; }
 
-.device-settings {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.device-settings .settings-body + .settings-body { border-inline-start: 1px solid #2a3b49; }
-.device-settings .settings-body > label { display: block; margin-bottom: 5px; color: #bccdda; font-size: .82rem; }
 #condition-description { margin-top: 5px; color: #b5c7d7; font-size: .79rem; line-height: 1.65; }
-.device-settings .case-context, .device-settings .monitor-note, .device-settings .estimate-note { padding-inline: 0; }
-.case-training { display: grid; gap: 6px; border-top: 1px solid var(--border); padding-top: 9px; margin-top: 4px; }
-.case-training h4, .case-training h5 { margin: 0; font-size: .84rem; }
-.case-training .case-challenge { color: var(--foreground); }
-.case-training button { justify-self: start; }
-.case-training summary { color: var(--cyan); cursor: pointer; font-size: .83rem; }
-.case-training details p { margin-block: 5px; }
-.case-training ul { margin: 0; padding-inline-start: 16px; }
-.case-training li + li { margin-top: 4px; }
-.device-physiology .detail-grid {
-  margin: 0;
-  gap: 6px;
-  padding: 7px;
-  align-items: start;
-}
+.device-settings .monitor-note, .device-settings .estimate-note { padding-inline: 0; }
 .device-physiology .anatomy-image {
-  display: grid;
-  align-items: center;
-  height: auto;
-  min-height: 158px;
+  height: min(39dvh, 335px);
   background: radial-gradient(ellipse at 50% 45%, #18313f, #091522 73%);
 }
-.device-physiology .anatomy-image .organ-display { max-width: 485px; width: 100%; }
+.device-physiology .anatomy-image .organ-display { width: min(100%, 58dvh, 485px); }
 .device-physiology .anatomy-value { z-index: 1; }
 .physiology-note { padding: 8px 11px; color: #b5c8d8; font-size: .77rem; }
 .device-physiology .panel-header { min-height: 46px; padding-block: 6px; }
 
-@media (max-width: 1050px) {
-  body:has(#simulator-view:not([hidden])) main { padding: 0 14px; }
-  .device-shell {
-    width: min(100%, 920px);
-    aspect-ratio: auto;
-    margin-top: 35px;
-    padding: 10px 10px clamp(65px, 14vw, 115px);
-    border: 1px solid #b6bdc0;
-    border-radius: 19px 19px 31px 31px;
-    background: linear-gradient(145deg, #dce2e4 0, #aeb6bc 15%, #d1d7da 46%, #8e9ca6 100%);
-    box-shadow: 0 12px 29px #040b13;
-  }
-  .device-shell::before {
-    position: absolute;
-    z-index: -1;
-    content: "";
-    inset: -27px 26% auto;
-    height: 32px;
-    border: 8px solid #bfc7cc;
-    border-block-end: 0;
-    border-radius: 12px 12px 0 0;
-    background: linear-gradient(180deg, #202d38, #0e1b27);
-    box-shadow: inset 0 3px 5px #0c141d, 0 -2px 4px #0b1320;
-  }
-  .device-hardware {
-    inset: auto 0 0;
-    width: 100%;
-    height: clamp(62px, 14vw, 112px);
-    object-fit: cover;
-    object-position: 50% 100%;
-    border-radius: 0 0 29px 29px;
-  }
-  .device-screen {
-    position: relative;
-    inset: auto;
-    grid-template-rows: auto auto auto auto;
-    border: 5px solid #26303b;
-    border-radius: 12px;
-  }
-  .device-monitor { height: clamp(320px, 49vw, 450px); }
-  .device-settings, .device-physiology { max-height: min(70vh, 600px); }
+#airway-status {
+  border: 1px solid #765445;
+  border-radius: 5px;
+  padding: 3px 5px;
+  background: #352730;
+  color: #ffd0a0;
+  font-size: .7rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
-@media (max-width: 620px) {
-  .device-shell { margin-top: 30px; padding: 6px 6px 63px; border-radius: 14px 14px 22px 22px; }
-  .device-hardware { border-radius: 0 0 20px 20px; }
-  .device-screen {
-    grid-template-areas: "heading" "navigation" "controls" "display";
-    border-width: 3px;
+#airway-status:hover { background: #51402d; }
+.paged-view {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+}
+.paged-pages {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: safe center;
+  min-width: 0;
+  min-height: 0;
+}
+.paged-pages [data-panel-page] {
+  width: min(100%, 56rem);
+  min-width: 0;
+  margin-inline: auto;
+  padding: clamp(7px, 1.3dvh, 16px) clamp(9px, 2vw, 24px);
+  overflow-wrap: anywhere;
+}
+.paged-pages [data-panel-page] > h2 { margin-block-end: 5px; }
+.paged-pages .settings-body { min-width: 0; }
+.paged-pages [data-panel-page] > p + p { margin-top: 6px; }
+.paged-pages #case-training { display: contents; }
+.reader-references { padding-inline-start: 20px; margin-block: 3px; }
+.reader-references li + li { margin-top: 4px; }
+.reader-references a { font-size: .81rem; }
+.paged-pages .case-challenge { margin-block: 6px; color: var(--foreground); }
+.paged-pages .case-context button { justify-self: start; }
+.paged-pages .case-context h2, .paged-pages .case-context p { max-width: 76ch; }
+.device-settings [data-panel-page="answer"] p { line-height: 1.5; }
+.page-navigation {
+  display: grid;
+  grid-template-columns: auto minmax(0, 16rem) auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-top: 1px solid #2a4051;
+  background: #132430;
+  border-end-start-radius: 8px;
+  border-end-end-radius: 8px;
+}
+.page-navigation .page-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 31px;
+  padding: 3px 5px;
+  font-size: .76rem;
+  text-overflow: ellipsis;
+}
+.page-navigation button {
+  color: #dae9f2;
+  border: 1px solid #3b566a;
+  border-radius: 6px;
+  background: #182c3b;
+  min-height: 31px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  font-size: .77rem;
+}
+.page-navigation button:hover:not(:disabled) { background: #244b56; }
+.page-navigation button:disabled { opacity: .46; cursor: default; }
+.page-navigation output, .page-navigation [role="status"] { color: var(--muted); font-size: .75rem; }
+.page-navigation > :focus-visible, .device-navigation > :focus-visible { outline-offset: -3px; }
+
+#lesson-view {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  margin-inline: auto;
+  width: min(100%, 1080px);
+  height: 100%;
+  padding: clamp(5px, 1.3dvh, 14px) 0;
+}
+#lesson-view .lesson-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  margin-bottom: clamp(5px, 1.1dvh, 11px);
+}
+#lesson-view h1 { font-size: clamp(1.25rem, 2.9vw, 2rem); }
+#lesson-view .secondary-button { padding: 5px 9px; font-size: .79rem; }
+#lesson-view .lesson-panel {
+  margin-block: 0;
+  background: #101e2c;
+  border: 1px solid #2a4051;
+  border-radius: 10px;
+}
+#lesson-view .page-navigation { border: 1px solid #2a4051; border-radius: 8px; }
+#lesson-view .volume-diagram { margin-block: 5px; }
+#lesson-view .volume-diagram div:nth-child(1) { min-height: clamp(33px, 5.7dvh, 52px); }
+#lesson-view .volume-diagram div:nth-child(2) { min-height: 17px; }
+#lesson-view .volume-diagram div:nth-child(n+3) { min-height: clamp(19px, 3.2dvh, 29px); }
+#lesson-view .volume-entry { gap: 3px 7px; padding-block: 4px; }
+
+.airway-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.airway-controls > * { min-width: 0; }
+.airway-controls h2 { font-size: 1rem; }
+.airway-controls label { font-size: .83rem; color: #c1d2df; }
+.airway-editor, .airway-visual { display: grid; gap: 6px; }
+.airway-editor > p { font-size: .83rem; color: var(--muted); line-height: 1.55; padding: 0; }
+.airway-visual button { justify-self: start; }
+#airway-control-group { margin: 0; grid-template-columns: minmax(0, 1fr); }
+.airway-tube {
+  --airway-opening: 100%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: min(100%, 27rem);
+  block-size: clamp(29px, 6.5dvh, 57px);
+  margin-inline: auto;
+  border: 3px solid #c1cece;
+  border-radius: 100vw;
+  background: repeating-linear-gradient(100deg, #536679 0 9px, #2f4758 9px 17px);
+  box-shadow: inset 0 0 11px #001923;
+}
+.airway-tube[data-airway]:not([data-airway="clear"]) {
+  border-color: #ad8581;
+  background: repeating-linear-gradient(100deg, #84534a 0 9px, #4f3438 9px 17px);
+}
+.airway-lumen {
+  display: block;
+  inline-size: calc(100% - 13px);
+  block-size: clamp(2px, var(--airway-opening), calc(100% - 9px));
+  background: linear-gradient(90deg, #0e222e 4%, #7ad6db 51%, #142837 96%);
+  border-radius: inherit;
+}
+.airway-tube[data-airway="blocked"] .airway-lumen { block-size: 0; }
+.airway-readouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: 4px;
+  margin: 0;
+}
+.airway-readouts > * {
+  margin: 0;
+  padding: 4px 6px;
+  border: 1px solid #294353;
+  border-radius: 6px;
+  background: #132432;
+}
+.airway-readouts dt { font-size: .73rem; color: #b3c7d7; }
+.airway-readouts dd { margin: 0; color: var(--cyan); font: 700 .86rem ui-monospace, monospace; }
+
+@media (max-width: 1050px), (max-height: 555px) {
+  body:has(#simulator-view:not([hidden])) main { padding: 5px 7px; }
+  .device-shell {
+    border: 1px solid #a0aeb9;
+    border-radius: 19px;
+    background: linear-gradient(145deg, #dce2e4, #aeb6bc 18%, #d1d7da 48%, #8e9ca6);
+    box-shadow: inset 0 1px 2px #ffffffa8, 0 5px 16px #040b13a1;
   }
-  .device-header { padding-inline: 6px; }
-  .device-heading { flex-direction: column; align-items: flex-start; gap: 2px; }
-  .device-heading h1 { font-size: .85rem; }
-  .device-patient { font-size: .65rem; }
-  .device-header .monitor-actions { gap: 3px; }
-  .device-header .monitor-actions .live-state { font-size: .65rem; }
-  .device-header .text-button { font-size: .66rem; }
-  .device-navigation { justify-content: stretch; padding-inline: 1px; }
-  .device-navigation button { flex: 1; padding: 7px 3px; font-size: .71rem; }
-  .device-monitor { height: auto; }
+  .device-hardware-frame { display: none; }
+  .device-screen {
+    inset: clamp(4px, 1.1dvh, 11px) clamp(4px, 1vw, 11px);
+    border: 4px solid #26303b;
+    border-radius: 13px;
+  }
+}
+
+@media (max-width: 620px) and (min-height: 421px) {
+  .header-inner { min-height: 43px; gap: 6px; }
+  .site-header .view-nav { margin-inline-start: 0; }
+  .fullscreen-button { min-width: 30px; padding: 4px 5px; }
+  .fullscreen-button span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .device-header { padding: 4px 5px; gap: 4px; }
+  .device-heading { flex: 1; align-items: flex-start; flex-direction: column; gap: 2px; }
+  .device-heading h1 { font-size: .86rem; }
+  .device-patient { font-size: .68rem; gap: 4px; overflow-wrap: anywhere; }
+  .device-heading .monitor-mode { padding: 3px 4px; }
+  .device-header .monitor-actions { gap: 4px; }
+  .device-header .monitor-actions .live-state { font-size: .63rem; }
+  .device-header .live-state > span { display: none; }
+  .device-header .text-button { font-size: .67rem; }
+  .device-navigation { padding-inline: 1px; gap: 1px; }
+  .device-navigation button { min-height: 32px; padding: 4px 1px; font-size: .68rem; }
   .device-controls {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    border-top: 0;
-    border-bottom: 1px solid #304655;
+    gap: 3px;
+    padding: 3px;
   }
-  .device-screen .device-controls .setting input { height: 23px; }
+  .device-screen .device-controls .setting { padding: 2px 6px; }
+  .device-screen .device-controls .setting input { height: 19px; }
   .monitor-layout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "numbers" "organs" "waves";
-    height: auto;
+    grid-template-columns: minmax(0, 1.36fr) minmax(0, 1fr);
+    grid-template-rows: clamp(108px, 20dvh, 166px) minmax(0, 1fr);
+    grid-template-areas: "numbers organs" "waves waves";
   }
-  .device-organs {
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    border-inline: 0;
-    border-block: 1px solid #2a3b4b;
-  }
-  .device-organs .organ-display { max-width: 265px; align-self: center; }
+  .device-organs { border-inline: 1px solid #2a3b4b; border-block-end: 1px solid #2a3b4b; }
+  .device-organs .organ-display { width: min(112%, 200px); }
+  .device-organs .organ-header { padding: 3px; }
+  .organ-header h2 { font-size: .65rem; }
+  .organ-header .phase { padding: 1px 3px; font-size: .6rem; }
+  .organ-readout > div { padding: 3px; gap: 1px 3px; }
+  .organ-readout strong { font-size: .85rem; }
+  .organ-readout span, .organ-readout small { font-size: .57rem; }
   .device-screen .monitor-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(2, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
   }
-  .device-screen .metric { padding: 5px 6px; }
-  .device-screen .waveforms { height: 268px; }
-  .device-settings, .device-physiology .detail-grid { grid-template-columns: minmax(0, 1fr); }
-  .device-settings, .device-physiology { max-height: none; }
-  .device-settings .settings-body + .settings-body { border-inline-start: 0; border-block-start: 1px solid #2a3b49; }
+  .device-screen .metric { padding: 3px 4px; }
+  .device-screen .metric > span, .device-screen .metric > small { font-size: .59rem; }
+  .device-screen .metric strong { font-size: .98rem; }
+  .device-screen .waveforms { padding: 1px 3px 2px; }
+  #lesson-view .lesson-heading { gap: 4px; }
+  #lesson-view .secondary-button { font-size: .7rem; padding-inline: 4px; }
+  #lesson-view .lesson-heading h1 { font-size: 1.11rem; }
+  .paged-pages [data-panel-page] { padding-inline: 7px; }
 }
-@media (max-width: 370px) {
-  body:has(#simulator-view:not([hidden])) main { padding-inline: 6px; }
-  .device-header .live-state > span { display: none; }
+
+@media (max-height: 460px) {
+  .header-inner { min-height: 39px; }
+  .site-header .brand-mark { width: 27px; height: 27px; }
+  .site-header .nav-button { padding-block: 4px; }
+  .device-header { padding: 3px 5px; }
+  .device-header .icon-button { height: 25px; width: 27px; }
+  .device-header .text-button { padding-block: 1px; }
+  .device-navigation button { min-height: 27px; padding-block: 3px; }
+  .device-controls { padding: 2px 4px; gap: 3px; }
+  .device-screen .device-controls .setting { padding-block: 1px; }
+  .device-screen .device-controls .setting label { min-height: 15px; }
+  .device-screen .device-controls .setting input { height: 14px; }
+  .device-screen .waveforms { padding-block: 0; }
+  .device-screen .wave figcaption { margin-block-start: 1px; font-size: .66rem; }
+  .device-screen .metric { padding-block: 1px; }
+  .device-screen .metric strong { font-size: 1rem; }
+  .device-screen .metric > span, .device-screen .metric > small { font-size: .59rem; }
+  .device-organs .organ-display { width: min(100%, 224px); }
+  .paged-pages [data-panel-page] { padding-block: 4px; }
+  .paged-pages [data-panel-page] h2 { font-size: .94rem; }
+  .paged-pages .settings-body, .paged-pages .case-context { padding-block: 5px; }
+  .paged-pages .case-context { gap: 4px; }
+  .paged-pages .case-context p, .paged-pages .lesson-panel p { line-height: 1.48; }
+  .paged-pages .mode-summary { margin-top: 4px; line-height: 1.45; }
+  .paged-pages .pickers { gap: 3px; }
+  .paged-pages select { min-height: 27px; padding-block: 2px; }
+  .paged-pages .setting { padding-block: 2px; }
+  .paged-pages .setting label { min-height: 16px; }
+  .paged-pages .panel-header { min-height: 35px; padding-block: 3px; }
+  .device-physiology .anatomy-image { height: min(30dvh, 122px); }
+  .device-physiology .anatomy-image .organ-display { width: min(100%, 44dvh, 190px); }
+  .airway-controls { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
+  .airway-editor > p { line-height: 1.4; }
+  .page-navigation { padding: 2px 5px; }
+  .page-navigation button, .page-navigation .page-select { min-height: 25px; padding-block: 1px; }
+  #lesson-view .lesson-heading { margin-bottom: 4px; }
+  #lesson-view h1 { font-size: 1.25rem; }
+  #lesson-view .lesson-panel { padding-block: 5px; }
+  #lesson-view .volume-diagram { margin-block: 3px; }
+  #lesson-view .volume-diagram div { padding-block: 0; }
+  #quiz-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 360px) {
+  .header-inner { width: calc(100% - 12px); }
+  .site-header .nav-button { padding-inline: 6px; }
+  body:has(#simulator-view:not([hidden])) main { padding: 3px 3px; }
+  .device-screen { inset: 3px; border-width: 3px; }
+  .device-header .text-button { padding-inline: 4px; }
+  .device-navigation button { font-size: .64rem; }
+  .airway-controls, .airway-editor, .airway-visual { gap: 4px; }
+  .airway-controls .pickers select { min-height: 34px; }
+  .airway-editor > p { font-size: .8rem; line-height: 1.45; }
+  .airway-tube { block-size: 29px; }
+  #lesson-view .volume-entry { grid-template-columns: 42px minmax(0, 1fr) auto; }
+  #lesson-view .volume-entry h3 { font-size: .83rem; }
+  #lesson-view .volume-entry strong { font-size: .78rem; }
 }

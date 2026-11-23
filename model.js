@@ -6,8 +6,44 @@ const HEMOGLOBIN = 14;
 const OXYGEN_CAPACITY = 1.34 * HEMOGLOBIN;
 const OXYGEN_SOLUBILITY = 0.0031;
 
+// Maximum added effective resistance in cmH₂O/(L/s) for a partial obstruction.
+// The clot represents a mobile expiratory-valve example.
+export const airwayStates = Object.freeze({
+  clear: Object.freeze({ maxAddedInspiratoryResistance: 0, maxAddedExpiratoryResistance: 0 }),
+  narrowing: Object.freeze({ maxAddedInspiratoryResistance: 36, maxAddedExpiratoryResistance: 36 }),
+  clot: Object.freeze({ maxAddedInspiratoryResistance: 24, maxAddedExpiratoryResistance: 56 }),
+  secretions: Object.freeze({ maxAddedInspiratoryResistance: 18, maxAddedExpiratoryResistance: 18 }),
+  blocked: Object.freeze({ maxAddedInspiratoryResistance: null, maxAddedExpiratoryResistance: null }),
+});
+
 function bounded(value, fallback, min, max) {
   return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+}
+
+function resolveAirway(settings, baselineResistance) {
+  const id = Object.hasOwn(airwayStates, settings.airway) ? settings.airway : "clear";
+  if (id === "blocked") {
+    return {
+      id,
+      severity: 100,
+      addedInspiratoryResistance: null,
+      addedExpiratoryResistance: null,
+      totalInspiratoryResistance: null,
+      totalExpiratoryResistance: null,
+    };
+  }
+  const severity = id === "clear" ? 0 : bounded(settings.airwaySeverity, 50, 0, 100);
+  const { maxAddedInspiratoryResistance, maxAddedExpiratoryResistance } = airwayStates[id];
+  const addedInspiratoryResistance = maxAddedInspiratoryResistance * (severity / 100);
+  const addedExpiratoryResistance = maxAddedExpiratoryResistance * (severity / 100);
+  return {
+    id,
+    severity,
+    addedInspiratoryResistance,
+    addedExpiratoryResistance,
+    totalInspiratoryResistance: baselineResistance + addedInspiratoryResistance,
+    totalExpiratoryResistance: baselineResistance + addedExpiratoryResistance,
+  };
 }
 
 function breathPattern(mode, cycle, inspiration, drivingPressure, support, effort) {
@@ -56,14 +92,16 @@ function muscularEffort(breath, phaseTime, inspiring) {
 }
 
 function runPhase(breath, mechanics, inspiring, startVolume, startTime, samples) {
-  const { compliance, resistance, peep, tidalTarget } = mechanics;
+  const { compliance, inspiratoryResistance, expiratoryResistance, peep, tidalTarget } = mechanics;
   const duration = inspiring ? breath.inspiration : breath.cycle - breath.inspiration;
   const count = Math.ceil(duration / SAMPLE_INTERVAL);
   const step = duration / count;
-  const decay = Math.exp(-step / (compliance * resistance));
+  const inspiratoryDecay = Math.exp(-step / (compliance * inspiratoryResistance));
+  const expiratoryDecay = Math.exp(-step / (compliance * expiratoryResistance));
   const constantFlow = inspiring && breath.volumeControlled
     ? tidalTarget / breath.inspiration
     : null;
+  const resistivePressure = (constantFlow ?? 0) * inspiratoryResistance;
   const deliveredPressure = inspiring ? peep + breath.pressure : peep;
   let volume = startVolume;
   let inhaled = 0;
@@ -75,8 +113,10 @@ function runPhase(breath, mechanics, inspiring, startVolume, startTime, samples)
     const alveolarPressure = peep + volume / compliance - effort;
     const pressure = constantFlow === null
       ? deliveredPressure
-      : alveolarPressure + resistance * constantFlow;
-    const flow = constantFlow ?? (pressure - alveolarPressure) / resistance;
+      : alveolarPressure + resistivePressure;
+    const pressureGradient = pressure - alveolarPressure;
+    const resistance = pressureGradient < 0 ? expiratoryResistance : inspiratoryResistance;
+    const flow = constantFlow ?? pressureGradient / resistance;
     samples?.push({
       time: startTime + phaseTime,
       pressure,
@@ -88,6 +128,7 @@ function runPhase(breath, mechanics, inspiring, startVolume, startTime, samples)
 
     const midpointEffort = muscularEffort(breath, phaseTime + step / 2, inspiring);
     const equilibrium = compliance * (deliveredPressure - peep + midpointEffort);
+    const decay = volume > equilibrium ? expiratoryDecay : inspiratoryDecay;
     const endVolume = constantFlow === null
       ? equilibrium + (volume - equilibrium) * decay
       : volume + constantFlow * step;
@@ -96,7 +137,6 @@ function runPhase(breath, mechanics, inspiring, startVolume, startTime, samples)
   }
 
   if (constantFlow !== null) {
-    const resistivePressure = resistance * constantFlow;
     peak = Math.max(peak, peep + volume / compliance + resistivePressure);
     if (samples) {
       // Preserve the peak on the waveform without duplicating the expiration timestamp.
@@ -154,6 +194,31 @@ function runPattern(pattern, mechanics, startVolume, samples) {
   }
 
   return { time, volume, inhaled, peak, plateau, intrinsicPeep, expiratoryTime, breaths };
+}
+
+function settledVolume(pattern, mechanics) {
+  const { compliance, inspiratoryResistance, expiratoryResistance } = mechanics;
+  const pressureDrivenTime = pattern.reduce(
+    (total, breath) => total + breath.cycle - (breath.volumeControlled ? breath.inspiration : 0),
+    0,
+  );
+  const slowestResistance = Math.max(inspiratoryResistance, expiratoryResistance);
+  const retainedFractionComplement = -Math.expm1(-pressureDrivenTime / (compliance * slowestResistance));
+  let high = runPattern(pattern, mechanics, 0).volume / retainedFractionComplement;
+
+  // Equal resistance gives one linear fixed point. With direction-dependent
+  // resistance, the slowest relaxation bounds the monotonic cycle map above.
+  if (inspiratoryResistance === expiratoryResistance || high === 0) return high;
+  let low = 0;
+  for (let iteration = 0; iteration < 32; iteration++) {
+    const midpoint = (low + high) / 2;
+    if (runPattern(pattern, mechanics, midpoint).volume > midpoint) {
+      low = midpoint;
+    } else {
+      high = midpoint;
+    }
+  }
+  return (low + high) / 2;
 }
 
 function traceSamples(cycleSamples, cycleDuration) {
@@ -228,9 +293,38 @@ function estimateGas(scenario, minuteVentilation, fio2, peep) {
   return { ...bloodGas, status: "ok", pao2, spo2 };
 }
 
+function simulateBlockedAirway(scenario, airway, fio2, peep) {
+  const intervals = Math.ceil(TRACE_DURATION / SAMPLE_INTERVAL);
+  return {
+    airway,
+    samples: Array.from({ length: intervals + 1 }, (_, index) => ({
+      time: TRACE_DURATION * index / intervals,
+      pressure: null,
+      flow: 0,
+      volume: 0,
+      alveolarPressure: null,
+    })),
+    metrics: {
+      peak: null,
+      plateau: null,
+      intrinsicPeep: null,
+      tidalVolume: 0,
+      minuteVentilation: 0,
+      breathsPerMinute: 0,
+      expiratoryTime: null,
+    },
+    gas: estimateGas(scenario, 0, fio2, peep),
+  };
+}
+
 /**
  * Educational, steady-periodic, single-compartment respiratory mechanics.
- * Airway resistance and respiratory-system compliance are constant. Volume
+ * Respiratory-system compliance and effective resistance in each direction
+ * are constant. An artificial airway obstruction adds a series resistance
+ * from a 0–100 exercise severity scale without defining a lumen percentage.
+ * Volume control imposes the target flow without a pressure limit for partial
+ * obstruction. A sealed airway delivers no flow or change in volume and does
+ * not model proximal circuit or distal alveolar pressure. Volume
  * is in mL above passive equilibrium at applied PEEP, so it includes trapped
  * volume. Flow is in L/min, pressure is in cmH2O, and time is in seconds.
  * The trace covers whole patterns for at least 14 seconds and closes at its
@@ -252,28 +346,28 @@ function estimateGas(scenario, minuteVentilation, fio2, peep) {
  * The results apply to fictional educational examples.
  */
 export function simulate(scenario = {}, settings = {}) {
-  const compliance = bounded(scenario.compliance, 50, 8, 180) / 1000;
   const resistance = bounded(scenario.resistance, 8, 1, 80);
-  const effort = bounded(scenario.effort, 7, 0, 25);
+  const airway = resolveAirway(settings, resistance);
   const peep = bounded(settings.peep, 5, 0, 30);
+  const fio2 = bounded(settings.fio2, 30, 21, 100) / 100;
+  if (airway.id === "blocked") return simulateBlockedAirway(scenario, airway, fio2, peep);
+
+  const compliance = bounded(scenario.compliance, 50, 8, 180) / 1000;
+  const effort = bounded(scenario.effort, 7, 0, 25);
   const tidalTarget = bounded(settings.vt, 450, 50, 1200) / 1000;
   const cycle = 60 / bounded(settings.rr, 14, 4, 60);
   const inspiration = cycle / (1 + bounded(settings.ie, 2, 0.4, 8));
-  const fio2 = bounded(settings.fio2, 30, 21, 100) / 100;
   const drivingPressure = bounded(settings.inspPressure, 14, 0, 45);
   const support = bounded(settings.pressureSupport, 8, 0, 30);
   const pattern = breathPattern(settings.mode ?? "VC", cycle, inspiration, drivingPressure, support, effort);
-  const mechanics = { compliance, resistance, peep, tidalTarget };
-
-  // Each cycle maps starting volume to final volume by a linear decay plus
-  // the response to imposed flow, pressure and effort. Solve its fixed point
-  // directly so the trace starts at periodic steady state, even in severe trapping.
-  const passiveDecayTime = pattern.reduce(
-    (total, breath) => total + breath.cycle - (breath.volumeControlled ? breath.inspiration : 0),
-    0,
-  );
-  const settledStart = runPattern(pattern, mechanics, 0).volume
-    / -Math.expm1(-passiveDecayTime / (compliance * resistance));
+  const mechanics = {
+    compliance,
+    inspiratoryResistance: airway.totalInspiratoryResistance,
+    expiratoryResistance: airway.totalExpiratoryResistance,
+    peep,
+    tidalTarget,
+  };
+  const settledStart = settledVolume(pattern, mechanics);
   const cycleSamples = [];
   const settled = runPattern(pattern, mechanics, settledStart, cycleSamples);
   const minuteVentilation = settled.inhaled * 60 / settled.time;
@@ -287,6 +381,7 @@ export function simulate(scenario = {}, settings = {}) {
     expiratoryTime: settled.breaths === 0 ? null : settled.expiratoryTime / settled.breaths,
   };
   return {
+    airway,
     samples: traceSamples(cycleSamples, settled.time),
     metrics,
     gas: estimateGas(scenario, minuteVentilation, fio2, peep),

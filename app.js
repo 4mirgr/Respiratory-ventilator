@@ -1,10 +1,13 @@
-import { lesson, scenarios, conditions, modes } from "./content.js?v=3";
-import { simulate } from "./model.js?v=3";
-import { createWaveforms } from "./waveforms.js?v=3";
-import { createOrganMotion } from "./organ-motion.js?v=3";
+import { airwayTraining, lesson, scenarios, conditions, modes } from "./content.js?v=4-airway";
+import { simulate } from "./model.js?v=4-airway";
+import { createWaveforms } from "./waveforms.js?v=4-airway";
+import { createOrganMotion } from "./organ-motion.js?v=4-airway";
 
 const find = selector => document.querySelector(selector);
-const defaults = { mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8, heartRate: null };
+const defaults = {
+  mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8,
+  heartRate: null, airway: "clear", airwaySeverity: 50,
+};
 const settings = { ...defaults };
 const controlDefinitions = [
   { key: "rr", label: "RR", name: "تعداد تنفس در دقیقه", min: 6, max: 35, step: 1 },
@@ -22,14 +25,17 @@ const mechanicsDefinitions = [
 ];
 const controlElements = new Map();
 const mechanicsElements = new Map();
+const airwayElements = new Map();
 const mechanicsOverrides = {};
 const caseSelect = find("#case-select");
 const conditionSelect = find("#condition-select");
 const modeSelect = find("#mode-select");
+const airwaySelect = find("#airway-select");
 const pauseButton = find("#pause-monitor");
 const breathIndicators = [find("#breath-phase"), find("#monitor-breath-phase")];
 const organMotion = createOrganMotion();
 const deviceTabs = [...document.querySelectorAll(".device-navigation button")];
+const pagers = new Map();
 let bicarbonate = null;
 let renderedScenario = null;
 
@@ -65,6 +71,47 @@ function makeSourceLink(source) {
 
 function fillSelect(select, items, label) {
   for (const item of items) select.add(new Option(label(item), item.id));
+}
+
+function createPager(view) {
+  const pages = [...view.querySelectorAll("[data-panel-page]")];
+  const nav = node("nav", undefined, "page-navigation");
+  nav.setAttribute("aria-label", "صفحه‌های این بخش");
+  const previous = node("button", "قبلی", "text-button");
+  const next = node("button", "بعدی", "text-button");
+  previous.type = next.type = "button";
+  const select = node("select", undefined, "page-select");
+  select.setAttribute("aria-label", "انتخاب صفحه");
+  nav.append(previous, select, next);
+  view.append(nav);
+  let available = [];
+
+  function show(key) {
+    const index = Math.max(0, available.findIndex(page => page.dataset.panelPage === key));
+    const active = available[index];
+    for (const page of pages) page.hidden = page !== active;
+    select.value = active.dataset.panelPage;
+    previous.disabled = index === 0;
+    next.disabled = index === available.length - 1;
+  }
+
+  function refresh() {
+    const prior = select.value;
+    available = pages.filter(page => !page.closest("[data-optional-pages][hidden]"));
+    select.replaceChildren(...available.map(page => new Option(page.dataset.pageTitle, page.dataset.panelPage)));
+    show(prior);
+  }
+
+  function move(offset, button) {
+    show(available[select.selectedIndex + offset].dataset.panelPage);
+    if (button.disabled) select.focus();
+  }
+
+  previous.addEventListener("click", () => move(-1, previous));
+  next.addEventListener("click", () => move(1, next));
+  select.addEventListener("change", () => show(select.value));
+  refresh();
+  return { refresh };
 }
 
 function selectedScenario() {
@@ -186,13 +233,13 @@ function renderScenario(scenario) {
   source.textContent = scenario.source.label + " ↗";
   source.hidden = Boolean(training);
   find("#case-training").hidden = !training;
+  pagers.get("#device-settings-view").refresh();
   if (!training) return;
 
   setText("#case-presentation", training.presentation);
   setText("#case-challenge", training.challenge);
   setText("#case-answer", training.answer);
   setText("#case-limitations", training.limitations);
-  find("#case-answer-detail").open = false;
   const references = training.references.map(reference => {
     const item = node("li");
     item.append(makeSourceLink(reference), node("p", reference.note));
@@ -201,13 +248,38 @@ function renderScenario(scenario) {
   find("#case-training-references").replaceChildren(...references);
 }
 
+function renderAirway(airway) {
+  const state = airwayTraining.states.find(state => state.id === airway.id);
+  const active = airway.id !== "clear";
+  const blocked = airway.id === "blocked";
+  airwaySelect.value = airway.id;
+  const { input, output } = airwayElements.get("airwaySeverity");
+  input.disabled = !active || blocked;
+  input.value = airway.severity;
+  output.value = format(airway.severity);
+  input.setAttribute("aria-valuetext", output.value + " از ۱۰۰ در مقیاس تمرین");
+  setText("#airway-description", state.description);
+  const resistance = value => Number.isFinite(value) ? format(value, 1) + " cmH₂O/(L/s)" : "—";
+  setText("#airway-resistance-in", resistance(airway.addedInspiratoryResistance));
+  setText("#airway-resistance-out", resistance(airway.addedExpiratoryResistance));
+  const tube = find("#airway-tube");
+  tube.dataset.airway = airway.severity > 0 ? state.id : "clear";
+  tube.style.setProperty("--airway-opening", (blocked ? 0 : 100 - airway.severity * 0.72) + "%");
+  const status = find("#airway-status");
+  status.hidden = !active || airway.severity === 0;
+  status.textContent = state.badge ?? state.title;
+  status.setAttribute("aria-label", state.title);
+  find("#pressure-unit").hidden = blocked;
+  find("#pressure-unavailable").hidden = !blocked;
+}
+
 function render() {
   const base = selectedScenario();
   const condition = selectedCondition();
   const scenario = { ...base, ...base.effects?.[condition.id], ...mechanicsOverrides };
   if (bicarbonate !== null) scenario.hco3 = bicarbonate;
   const mode = modes.find(item => item.id === settings.mode) ?? modes[0];
-  const { samples, metrics, gas } = simulate(scenario, settings);
+  const { samples, metrics, gas, airway } = simulate(scenario, settings);
   const heartRate = settings.heartRate ?? (condition.id === "rapid-rhythm" ? 145 : 78);
 
   updateControls(heartRate);
@@ -223,6 +295,7 @@ function render() {
   chart.replace(samples);
   updateMonitor(metrics, base, mode);
   updateLab(gas, scenario, condition, heartRate);
+  renderAirway(airway);
 }
 
 function resetSettings() {
@@ -246,7 +319,6 @@ function showView(lessonVisible) {
   find("#tab-simulator").setAttribute("aria-pressed", String(!lessonVisible));
   find("#tab-lesson").setAttribute("aria-pressed", String(lessonVisible));
   (lessonVisible ? find("#lesson-title") : find("#simulator-title")).focus({ preventScroll: true });
-  window.scrollTo(0, 0);
 }
 
 function showDeviceTab(active) {
@@ -255,6 +327,7 @@ function showDeviceTab(active) {
     button.setAttribute("aria-pressed", String(selected));
     document.getElementById(button.getAttribute("aria-controls")).hidden = !selected;
   }
+  find("#controls").hidden = active.id !== "device-monitor-tab";
 }
 
 function setPaused(paused) {
@@ -269,35 +342,54 @@ function setPaused(paused) {
   status.lastElementChild.textContent = paused ? "متوقف" : "در حال اجرا";
 }
 
+function appendSources(list, sources) {
+  for (const source of sources) {
+    const item = node("li");
+    item.append(makeSourceLink(source));
+    list.append(item);
+  }
+}
+
 function buildLesson() {
   setText("#lesson-title", lesson.title);
   setText("#lesson-intro", lesson.intro);
-  const volumeList = find("#lesson-volumes");
-  for (const volume of lesson.volumes) {
-    const entry = node("article", undefined, "volume-entry");
-    const abbreviation = node("span", volume.abbr, "mono");
-    abbreviation.dir = "ltr";
-    entry.append(abbreviation, node("h3", volume.name), node("strong", volume.value), node("p", volume.definition));
-    volumeList.append(entry);
+  const pages = find("#lesson-view .paged-pages");
+  const quiz = find("#quiz-prompt").closest("section");
+
+  function addPage(key, title, ...content) {
+    const page = node("section", undefined, "lesson-panel");
+    page.dataset.panelPage = key;
+    page.dataset.pageTitle = title;
+    page.hidden = true;
+    page.append(node("h2", title), ...content);
+    pages.append(page);
   }
-  const concepts = find("#lesson-concepts");
-  for (const concept of lesson.concepts) {
-    const entry = node("article");
-    entry.append(node("h3", concept.title), node("p", concept.body));
-    concepts.append(entry);
+
+  for (const [index, volume] of lesson.volumes.entries()) {
+    if (index % 2 !== 0) continue;
+    const key = index < 4 ? "volumes" : "capacities";
+    const number = (index % 4) / 2 + 1;
+    const entries = lesson.volumes.slice(index, index + 2).map(item => {
+      const entry = node("article", undefined, "volume-entry");
+      const abbreviation = node("span", item.abbr, "mono");
+      abbreviation.dir = "ltr";
+      entry.append(abbreviation, node("h3", item.name), node("strong", item.value), node("p", item.definition));
+      return entry;
+    });
+    addPage(key + "-" + number, volume.abbr + " و " + lesson.volumes[index + 1].abbr, ...entries);
   }
-  const modeList = find("#lesson-modes");
+  pages.append(quiz);
+  for (const [index, concept] of lesson.concepts.entries()) {
+    addPage("concept-" + (index + 1), concept.title, node("p", concept.body));
+  }
   for (const mode of modes) {
-    const entry = node("article");
-    const heading = node("h3", mode.short + " · " + mode.title);
-    entry.append(heading, node("p", mode.description), node("p", mode.uses), node("p", mode.watch));
-    modeList.append(entry);
+    addPage("mode-" + mode.id, mode.short + " · " + mode.title, node("p", mode.description), node("p", mode.uses), node("p", mode.watch));
   }
-  const sources = find("#lesson-sources");
-  for (const source of lesson.sources) {
-    const item = node("li");
-    item.append(makeSourceLink(source));
-    sources.append(item);
+  for (let start = 0; start < lesson.sources.length; start += 4) {
+    const number = start / 4 + 1;
+    const list = node("ul", undefined, "reader-references");
+    appendSources(list, lesson.sources.slice(start, start + 4));
+    addPage("sources-" + number, "منابع درس " + number, list);
   }
   buildQuiz();
 }
@@ -330,10 +422,19 @@ function buildQuiz() {
 fillSelect(caseSelect, scenarios, scenario => scenario.title);
 fillSelect(conditionSelect, conditions, condition => condition.title);
 fillSelect(modeSelect, modes, mode => mode.short + " — " + mode.title);
+fillSelect(airwaySelect, airwayTraining.states, state => state.title);
 caseSelect.value = "normal";
 buildControls(controlDefinitions, "#controls", controlElements, settings);
 buildControls(mechanicsDefinitions, "#mechanic-controls", mechanicsElements, mechanicsOverrides);
+buildControls(
+  [{ key: "airwaySeverity", label: "شدت فرضی تنگی", name: "شدت تنگی در مقیاس آموزشی", min: 0, max: 100 }],
+  "#airway-control-group", airwayElements, settings,
+);
+appendSources(find("#airway-sources"), airwayTraining.sources);
 buildLesson();
+for (const selector of ["#device-settings-view", "#device-airway-view", "#device-physiology-view", "#lesson-view"]) {
+  pagers.set(selector, createPager(find(selector)));
+}
 resetSettings();
 setPaused(chart.paused);
 
@@ -346,6 +447,10 @@ modeSelect.addEventListener("change", () => {
   settings.mode = modeSelect.value;
   render();
 });
+airwaySelect.addEventListener("change", () => {
+  settings.airway = airwaySelect.value;
+  render();
+});
 find("#control-hco3").addEventListener("input", event => {
   bicarbonate = Number(event.target.value);
   render();
@@ -355,9 +460,33 @@ pauseButton.addEventListener("click", () => setPaused(!chart.paused));
 find("#tab-simulator").addEventListener("click", () => showView(false));
 find("#tab-lesson").addEventListener("click", () => showView(true));
 find("#open-simulator").addEventListener("click", () => showView(false));
-find("#case-open-monitor").addEventListener("click", () => {
-  const monitor = find("#device-monitor-tab");
-  showDeviceTab(monitor);
-  monitor.focus();
-});
+for (const [button, tab] of [
+  ["#case-open-monitor", "#device-monitor-tab"],
+  ["#airway-open-monitor", "#device-monitor-tab"],
+  ["#airway-status", "#device-airway-tab"],
+]) {
+  find(button).addEventListener("click", () => {
+    const target = find(tab);
+    showDeviceTab(target);
+    target.focus();
+  });
+}
 for (const button of deviceTabs) button.addEventListener("click", () => showDeviceTab(button));
+
+const fullscreenButton = find("#fullscreen-toggle");
+if (document.fullscreenEnabled) {
+  fullscreenButton.hidden = false;
+  fullscreenButton.addEventListener("click", async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch {
+      fullscreenButton.hidden = true;
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    const fullscreen = Boolean(document.fullscreenElement);
+    fullscreenButton.setAttribute("aria-pressed", String(fullscreen));
+    fullscreenButton.lastElementChild.textContent = fullscreen ? "خروج از تمام‌صفحه" : "تمام‌صفحه";
+  });
+}

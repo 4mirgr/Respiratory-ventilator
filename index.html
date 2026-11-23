@@ -2,15 +2,15 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a1220">
   <meta name="description" content="آموزش فارسی فیزیولوژی تنفس و تمرین با ونتیلاتور شبیه‌سازی‌شده">
   <title>آزمایشگاه تنفس | شبیه‌ساز ونتیلاتور</title>
   <link rel="icon" href="./assets/favicon.png" type="image/png">
-  <link rel="stylesheet" href="./styles.css?v=3">
-  <link rel="stylesheet" href="./organ-motion.css?v=3">
-  <link rel="stylesheet" href="./device.css?v=3">
-  <script type="module" src="./app.js?v=3"></script>
+  <link rel="stylesheet" href="./styles.css?v=4-airway">
+  <link rel="stylesheet" href="./organ-motion.css?v=4-airway">
+  <link rel="stylesheet" href="./device.css?v=4-airway">
+  <script type="module" src="./app.js?v=4-airway"></script>
 </head>
 <body>
   <header class="site-header">
@@ -23,14 +23,16 @@
         <button id="tab-simulator" class="nav-button selected" type="button" aria-controls="simulator-view" aria-pressed="true">شبیه‌ساز</button>
         <button id="tab-lesson" class="nav-button" type="button" aria-controls="lesson-view" aria-pressed="false">درس و تمرین</button>
       </nav>
-      <span class="training-tag"><i aria-hidden="true"></i> محیط آموزشی</span>
+      <button id="fullscreen-toggle" class="text-button fullscreen-button" type="button" aria-pressed="false" hidden><span aria-hidden="true">⛶</span> <span>تمام‌صفحه</span></button>
     </div>
   </header>
 
   <main class="shell">
     <section id="simulator-view" aria-labelledby="simulator-title">
       <div id="device-shell" class="device-shell">
-        <img id="device-hardware" class="device-hardware" src="./assets/ventilator-housing.webp" alt="" fetchpriority="high">
+        <div class="device-hardware-frame" aria-hidden="true">
+          <img id="device-hardware" class="device-hardware" src="./assets/ventilator-housing.webp" alt="" fetchpriority="high">
+        </div>
         <div id="device-screen" class="device-screen">
           <header class="device-header">
             <div class="device-heading">
@@ -38,6 +40,7 @@
               <div class="device-patient">
                 <span id="monitor-mode" class="mono monitor-mode" dir="ltr">VC</span>
                 <span id="monitor-case">مکانیک پایهٔ تنفس</span>
+                <button id="airway-status" class="airway-status" type="button" hidden></button>
               </div>
             </div>
             <div class="monitor-actions">
@@ -50,6 +53,7 @@
           <nav class="device-navigation" aria-label="صفحه‌های ونتیلاتور">
             <button id="device-monitor-tab" type="button" aria-controls="device-monitor-view" aria-pressed="true">مانیتور</button>
             <button id="device-settings-tab" type="button" aria-controls="device-settings-view" aria-pressed="false">بیمار و تنظیمات</button>
+            <button id="device-airway-tab" type="button" aria-controls="device-airway-view" aria-pressed="false">لولهٔ تراشه</button>
             <button id="device-physiology-tab" type="button" aria-controls="device-physiology-view" aria-pressed="false">قلب، ریه و ABG</button>
           </nav>
 
@@ -57,7 +61,7 @@
             <div class="monitor-layout">
               <div class="waveforms">
                 <figure class="wave wave-pressure">
-                  <figcaption><strong>فشار راه هوایی</strong><span dir="ltr">cmH₂O</span></figcaption>
+                  <figcaption><strong>فشار راه هوایی</strong><span dir="ltr" id="pressure-unit">cmH₂O</span><span id="pressure-unavailable" hidden>در انسداد کامل برآورد نمی‌شود</span></figcaption>
                   <canvas id="pressure-chart" role="img" aria-label="نمودار زندهٔ فشار راه هوایی بر حسب زمان"></canvas>
                 </figure>
                 <figure class="wave wave-flow">
@@ -88,67 +92,98 @@
             </div>
           </section>
 
-          <section id="device-settings-view" class="device-view device-settings" aria-labelledby="device-settings-tab" hidden>
-            <div class="settings-body">
-              <div class="pickers">
-                <label for="case-select">سناریوی بیمار</label>
-                <select id="case-select"></select>
-                <label for="mode-select">مد ونتیلاتور</label>
-                <select id="mode-select" dir="ltr"></select>
-              </div>
-              <div class="mode-summary">
-                <span id="mode-code" class="mono" dir="ltr"></span>
-                <p id="mode-description"></p>
-              </div>
-              <p id="monitor-note" class="monitor-note"></p>
-              <p class="estimate-note">* پلاتو و فشار ذاتی، برآورد مدل‌اند. در مد خودبه‌خودی پلاتو نمایش داده نمی‌شود.</p>
-            </div>
-            <div class="settings-body">
-              <label for="condition-select">شرایط همراه قلبی‌ریوی</label>
-              <select id="condition-select"></select>
-              <p id="condition-description"></p>
-              <div id="mechanic-controls" class="controls" aria-label="مکانیک بیمار"></div>
-              <p id="mechanics-override-note" class="estimate-note" hidden>مقادیر دستی مکانیک در مقایسهٔ شرایط همراه ثابت می‌مانند.</p>
-              <div class="case-context">
-                <h3 id="case-title"></h3>
+          <section id="device-settings-view" class="device-view paged-view device-settings" aria-labelledby="device-settings-tab" hidden>
+            <div class="paged-pages">
+              <section data-panel-page="settings" data-page-title="بیمار و مد" class="settings-body">
+                <div class="pickers">
+                  <label for="case-select">سناریوی بیمار</label>
+                  <select id="case-select"></select>
+                  <label for="mode-select">مد ونتیلاتور</label>
+                  <select id="mode-select" dir="ltr"></select>
+                </div>
+                <div class="mode-summary">
+                  <span id="mode-code" class="mono" dir="ltr"></span>
+                  <p id="mode-description"></p>
+                </div>
+                <p id="monitor-note" class="monitor-note"></p>
+              </section>
+              <section data-panel-page="mechanics" data-page-title="مکانیک و بیماری همراه" class="settings-body" hidden>
+                <div class="pickers">
+                  <label for="condition-select">شرایط همراه قلبی‌ریوی</label>
+                  <select id="condition-select"></select>
+                </div>
+                <p id="condition-description"></p>
+                <div id="mechanic-controls" class="controls" aria-label="مکانیک بیمار"></div>
+                <p id="mechanics-override-note" class="estimate-note" hidden>مقادیر دستی مکانیک در مقایسهٔ شرایط همراه ثابت می‌مانند.</p>
+              </section>
+              <section data-panel-page="case" data-page-title="خلاصهٔ کیس" class="case-context" hidden>
+                <h2 id="case-title"></h2>
                 <p id="case-summary"></p>
                 <p id="case-clinic"></p>
-                <a id="case-source" target="_blank" rel="noopener noreferrer">مرجع سناریو ↗</a>
-                <section id="case-training" class="case-training" aria-labelledby="case-training-title" hidden>
-                  <h4 id="case-training-title">تمرین بالینی</h4>
+                <p class="estimate-note">فشار پلاتو و فشار ذاتی برآورد مدل‌اند. در مدهای خودبه‌خودی، پلاتو نمایش داده نمی‌شود.</p>
+                <a id="case-source" target="_blank" rel="noopener noreferrer"></a>
+              </section>
+              <div id="case-training" data-optional-pages hidden>
+                <section data-panel-page="exercise" data-page-title="تمرین بالینی" class="case-context" hidden>
+                  <h2>تمرین بالینی</h2>
                   <p id="case-presentation"></p>
                   <p id="case-challenge" class="case-challenge"></p>
                   <button id="case-open-monitor" type="button" class="text-button">رفتن به مانیتور</button>
-                  <details id="case-answer-detail">
-                    <summary>دیدن پاسخ و توضیح</summary>
-                    <p id="case-answer"></p>
-                    <p id="case-limitations"></p>
-                  </details>
-                  <h5>منابع این تمرین</h5>
-                  <ul id="case-training-references"></ul>
+                </section>
+                <section data-panel-page="answer" data-page-title="پاسخ تمرین" class="case-context" hidden>
+                  <h2>پاسخ تمرین</h2>
+                  <p id="case-answer"></p>
+                  <p id="case-limitations"></p>
+                </section>
+                <section data-panel-page="case-sources" data-page-title="منابع کیس" class="case-context" hidden>
+                  <h2>منابع تمرین</h2>
+                  <ul id="case-training-references" class="reader-references"></ul>
                 </section>
               </div>
             </div>
           </section>
 
-          <section id="device-physiology-view" class="device-view device-physiology" aria-labelledby="device-physiology-tab" hidden>
-            <div class="detail-grid">
-              <section class="panel anatomy" aria-labelledby="anatomy-title">
-                <header class="panel-header">
-                  <div><h2 id="anatomy-title">قلب و ریه</h2><p>حرکت شماتیک اندام‌ها در هر چرخه</p></div>
-                  <span id="breath-phase" class="phase">دم</span>
-                </header>
-                <div class="anatomy-image">
-                  <div id="organ-image" class="organ-display" role="img" aria-label="نمای متحرک ریه‌ها، نای و قلب"></div>
-                  <div class="anatomy-value anatomy-co"><span>برون‌ده قلبی</span><strong id="cardiac-output" dir="ltr">—</strong></div>
-                  <div class="anatomy-value anatomy-shunt"><span>ضربان شماتیک</span><strong id="heart-rate" dir="ltr">—</strong></div>
+          <section id="device-airway-view" class="device-view paged-view" aria-labelledby="device-airway-tab" hidden>
+            <div class="paged-pages">
+              <section data-panel-page="airway" data-page-title="وضعیت لوله" class="airway-controls">
+                <div class="airway-editor">
+                  <div class="pickers">
+                    <label for="airway-select">وضعیت لولهٔ تراشه</label>
+                    <select id="airway-select"></select>
+                  </div>
+                  <div id="airway-control-group" class="controls"></div>
+                  <p id="airway-description"></p>
+                  <p class="estimate-note">شدت، مقیاس تمرین است. درصد انسداد واقعی را نشان نمی‌دهد.</p>
                 </div>
-                <p class="physiology-note">اسلایدر HR سرعت تپش تصویر را تغییر می‌دهد. برون‌ده قلبی و تبادل گاز از شرایط کیس محاسبه می‌شوند.</p>
+                <div class="airway-visual">
+                  <div id="airway-tube" class="airway-tube" data-airway="clear" aria-hidden="true"><span class="airway-lumen"></span></div>
+                  <dl class="airway-readouts">
+                    <div><dt>مقاومت اضافهٔ دم</dt><dd id="airway-resistance-in" dir="ltr">—</dd></div>
+                    <div><dt>مقاومت اضافهٔ بازدم</dt><dd id="airway-resistance-out" dir="ltr">—</dd></div>
+                  </dl>
+                  <button id="airway-open-monitor" type="button" class="text-button">دیدن اثر روی مانیتور</button>
+                </div>
               </section>
-              <section class="panel lab" aria-labelledby="lab-title">
+              <section data-panel-page="airway-guide" data-page-title="تمرین موج‌ها" class="case-context" hidden>
+                <h2>مقایسهٔ مدها در تنگی لوله</h2>
+                <p>در کیس پایه و با سایر تنظیمات ثابت، لولهٔ باز را با تنگی نسبی در <bdi>VC</bdi> و <bdi>PC</bdi> مقایسه کن.</p>
+                <p>در <bdi>VC</bdi> فاصلهٔ <bdi>Ppeak</bdi> تا <bdi>Pplat</bdi> بیشتر می‌شود و حجم هدف در مدل حفظ می‌شود. در <bdi>PC</bdi>، با فشار و زمان دم ثابت، حجم جاری می‌تواند افت کند.</p>
+                <p>در هر دو مد، دنبالهٔ جریان بازدم و <bdi>Auto-PEEP</bdi> را بررسی کن. این تمرین انسداد نسبی را تقریب می‌زند. تشخیص علت به ارزیابی بالینی نیاز دارد.</p>
+              </section>
+              <section data-panel-page="airway-sources" data-page-title="منابع لوله" class="case-context" hidden>
+                <h2>منابع انسداد لوله</h2>
+                <ul id="airway-sources" class="reader-references"></ul>
+                <p>در انسداد کامل، جریان و حجم تحویلی صفرند. فشار سمت دستگاه به سقف فشار و پاسخ دستگاه وابسته است و در این حالت برآورد نمی‌شود.</p>
+              </section>
+            </div>
+          </section>
+
+          <section id="device-physiology-view" class="device-view paged-view device-physiology" aria-labelledby="device-physiology-tab" hidden>
+            <div class="paged-pages">
+              <section data-panel-page="gas" data-page-title="گاز خون" class="gas-page">
                 <header class="panel-header">
                   <div>
-                    <h2 id="lab-title">تبادل گاز و اسید–باز</h2>
+                    <h2>تبادل گاز و اسید–باز</h2>
                     <p>گاز خون شریانی در حالت پایدار مدل</p>
                   </div>
                   <span class="mono panel-badge" dir="ltr">ABG</span>
@@ -161,27 +196,39 @@
                   <div><span dir="ltr">SpO₂</span><strong id="gas-spo2" dir="ltr">—</strong><small>%</small></div>
                 </div>
                 <p id="gas-note" class="estimate-note" role="status" hidden></p>
-                <div class="alveolar-panel">
-                  <img src="./assets/alveoli.webp" alt="نمای شماتیک خوشهٔ آلوئول و مویرگ‌های اطراف" width="450" height="300">
-                  <div>
-                    <h3>آلوئول و مویرگ ریوی</h3>
-                    <dl>
-                      <div><dt>تهویهٔ آلوئولی</dt><dd id="alveolar-ventilation" dir="ltr">—</dd></div>
-                      <div><dt>فشار اکسیژن آلوئولی</dt><dd id="alveolar-oxygen" dir="ltr">—</dd></div>
-                      <div><dt>سهم شانت در مدل</dt><dd id="shunt-value" dir="ltr">—</dd></div>
-                    </dl>
-                    <p>اکسیژن از آلوئول به خون می‌رود و دی‌اکسیدکربن از خون به آلوئول برمی‌گردد.</p>
-                  </div>
+                <div class="setting bicarbonate-control">
+                  <label for="control-hco3">بیکربنات مدل <output id="value-hco3" for="control-hco3"></output></label>
+                  <input id="control-hco3" type="range" min="10" max="42" step="1">
                 </div>
-                <div class="chemistry">
-                  <span>بافر بیکربنات</span>
-                  <div class="chemistry-formula" dir="ltr">CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻</div>
-                  <p>با بیکربنات ثابت، افزایش <bdi>PaCO₂</bdi> موجب کاهش <bdi>pH</bdi> می‌شود.</p>
-                  <div class="setting bicarbonate-control">
-                    <label for="control-hco3">بیکربنات مدل <output id="value-hco3" for="control-hco3"></output></label>
-                    <input id="control-hco3" type="range" min="10" max="42" step="1">
-                  </div>
+              </section>
+              <section data-panel-page="anatomy" data-page-title="قلب و ریه" class="anatomy" hidden>
+                <header class="panel-header">
+                  <div><h2>قلب و ریه</h2><p>حرکت شماتیک اندام‌ها در هر چرخه</p></div>
+                  <span id="breath-phase" class="phase">دم</span>
+                </header>
+                <div class="anatomy-image">
+                  <div id="organ-image" class="organ-display" role="img" aria-label="نمای متحرک ریه‌ها، نای و قلب"></div>
+                  <div class="anatomy-value anatomy-co"><span>برون‌ده قلبی</span><strong id="cardiac-output" dir="ltr">—</strong></div>
+                  <div class="anatomy-value anatomy-shunt"><span>ضربان شماتیک</span><strong id="heart-rate" dir="ltr">—</strong></div>
                 </div>
+                <p class="physiology-note">اسلایدر HR در مانیتور، سرعت تپش تصویر را تغییر می‌دهد. برون‌ده قلبی از شرایط کیس محاسبه می‌شود.</p>
+              </section>
+              <section data-panel-page="alveoli" data-page-title="آلوئول و شانت" class="alveolar-panel" hidden>
+                <img src="./assets/alveoli.webp" alt="نمای شماتیک خوشهٔ آلوئول و مویرگ‌های اطراف" width="450" height="300">
+                <div>
+                  <h2>آلوئول و مویرگ ریوی</h2>
+                  <dl>
+                    <div><dt>تهویهٔ آلوئولی</dt><dd id="alveolar-ventilation" dir="ltr">—</dd></div>
+                    <div><dt>فشار اکسیژن آلوئولی</dt><dd id="alveolar-oxygen" dir="ltr">—</dd></div>
+                    <div><dt>سهم شانت در مدل</dt><dd id="shunt-value" dir="ltr">—</dd></div>
+                  </dl>
+                  <p>اکسیژن از آلوئول به خون می‌رود و دی‌اکسیدکربن از خون به آلوئول برمی‌گردد.</p>
+                </div>
+              </section>
+              <section data-panel-page="chemistry" data-page-title="بافر بیکربنات" class="chemistry" hidden>
+                <h2>بافر بیکربنات</h2>
+                <div class="chemistry-formula" dir="ltr">CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻</div>
+                <p>با بیکربنات ثابت، افزایش <bdi>PaCO₂</bdi> موجب کاهش <bdi>pH</bdi> می‌شود.</p>
               </section>
             </div>
           </section>
@@ -191,52 +238,29 @@
       </div>
     </section>
 
-    <section id="lesson-view" aria-labelledby="lesson-title" hidden>
-      <div class="page-intro">
-        <div>
-          <p class="lesson-index">درس اول</p>
-          <h1 id="lesson-title" tabindex="-1">حجم‌ها و ظرفیت‌های ریه</h1>
+    <section id="lesson-view" class="paged-view" aria-labelledby="lesson-title" hidden>
+      <header class="lesson-heading">
+        <h1 id="lesson-title" tabindex="-1">حجم‌ها و ظرفیت‌های ریه</h1>
+        <button id="open-simulator" type="button" class="secondary-button">بازگشت به مانیتور</button>
+      </header>
+      <div class="paged-pages">
+        <section data-panel-page="intro" data-page-title="شروع درس" class="lesson-panel">
+          <h2>اجزای ظرفیت کل ریه</h2>
           <p id="lesson-intro"></p>
-        </div>
-        <button id="open-simulator" type="button" class="secondary-button">ورود به شبیه‌ساز <span aria-hidden="true">←</span></button>
-      </div>
-      <div class="lesson-grid">
-        <section class="panel lesson-panel">
-          <h2>حجم‌ها و ظرفیت‌ها</h2>
-          <p>حجم‌ها نمونهٔ فرضی‌اند و با سن، قد و جنس تغییر می‌کنند.</p>
           <div class="volume-diagram" dir="ltr" role="img" aria-label="اجزای ظرفیت کل ریه، از پایین به بالا حجم باقیمانده، ذخیرهٔ بازدمی، حجم جاری و ذخیرهٔ دمی">
             <div>IRV</div><div>Vₜ</div><div>ERV</div><div>RV</div>
           </div>
-          <div id="lesson-volumes" class="volume-list"></div>
         </section>
-        <div class="lesson-stack">
-          <section class="panel lesson-panel">
-            <h2>اصطلاحات کنار تخت</h2>
-            <div id="lesson-concepts" class="concepts"></div>
-          </section>
-          <section class="panel lesson-panel quiz">
-            <h2>خودت را محک بزن</h2>
-            <p id="quiz-prompt"></p>
-            <div id="quiz-options"></div>
-            <p id="quiz-feedback" role="status" hidden></p>
-          </section>
-        </div>
+        <section data-panel-page="quiz" data-page-title="خودآزمایی" class="lesson-panel quiz" hidden>
+          <h2>خودت را محک بزن</h2>
+          <p id="quiz-prompt"></p>
+          <div id="quiz-options"></div>
+          <p id="quiz-feedback" role="status" hidden></p>
+        </section>
       </div>
-      <section class="panel lesson-panel mode-guide">
-        <h2>مدهای ونتیلاسیون و کاربرد آن‌ها</h2>
-        <div id="lesson-modes"></div>
-      </section>
-      <section class="panel lesson-panel">
-        <h2>منابع درس</h2>
-        <ul id="lesson-sources"></ul>
-      </section>
     </section>
     <noscript><p>برای اجرای شبیه‌ساز، جاوااسکریپت مرورگر را فعال کن.</p></noscript>
   </main>
 
-  <footer class="shell site-footer">
-    <span>آزمایشگاه تنفس · شبیه‌سازی آموزشی با کیس‌های فرضی</span>
-    <a href="https://github.com/4mirgr/Respiratory-ventilator" target="_blank" rel="noopener noreferrer">مخزن پروژه ↗</a>
-  </footer>
 </body>
 </html>

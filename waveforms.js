@@ -70,6 +70,7 @@ function updateScale(chart, samples) {
   let minimum = chart.low;
   let maximum = chart.high;
   for (const sample of samples) {
+    if (!Number.isFinite(sample[chart.field])) continue;
     minimum = Math.min(minimum, sample[chart.field]);
     maximum = Math.max(maximum, sample[chart.field]);
   }
@@ -93,12 +94,14 @@ function drawTrace(chart, samples, duration, phaseTime) {
   ctx.clearRect(0, 0, width, height);
   const plotLeft = 30;
   const plotRight = width - 6;
-  const plotTop = 10;
-  const plotBottom = height - (chart.timeAxis ? 24 : 9);
+  const compact = height <= 75;
+  const plotTop = compact ? 6 : 10;
+  const plotBottom = height - (chart.timeAxis ? (compact ? 16 : 24) : 7);
+  if (plotBottom <= plotTop || plotRight <= plotLeft) return;
   const x = time => plotLeft + (plotRight - plotLeft) * time / duration;
   const y = value => plotBottom - (plotBottom - plotTop) * (value - minimum) / (maximum - minimum);
   ctx.lineWidth = 1;
-  ctx.font = "10px ui-monospace, monospace";
+  ctx.font = (compact ? "9px" : "10px") + " ui-monospace, monospace";
   ctx.textBaseline = "middle";
   ctx.direction = "ltr";
   ctx.textAlign = "left";
@@ -112,10 +115,10 @@ function drawTrace(chart, samples, duration, phaseTime) {
   }
   if (chart.timeAxis) {
     ctx.fillStyle = "#a1b2c5";
-    const lastTick = Math.floor(duration / 4) * 4;
-    for (let time = 0; time <= lastTick; time += 4) {
+    const tickSpacing = width < 240 && duration >= 16 ? 8 : 4;
+    for (let time = 0; time <= duration; time += tickSpacing) {
       const label = time + " s";
-      ctx.fillText(label, Math.min(x(time), plotRight - ctx.measureText(label).width), height - 9);
+      ctx.fillText(label, Math.min(x(time), plotRight - ctx.measureText(label).width), height - (compact ? 5 : 9));
     }
   }
   for (let index = 0; index <= 4; index++) {
@@ -133,11 +136,17 @@ function drawTrace(chart, samples, duration, phaseTime) {
   ctx.strokeStyle = color;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  for (const [index, sample] of samples.entries()) {
+  let started = false;
+  for (const sample of samples) {
+    if (!Number.isFinite(sample[field])) {
+      started = false;
+      continue;
+    }
     const px = x(sample.time);
     const py = y(sample[field]);
-    if (index === 0) ctx.moveTo(px, py);
+    if (!started) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
+    started = true;
   }
   ctx.stroke();
 

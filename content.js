@@ -104,6 +104,21 @@ export const modes = [
   },
 ];
 
+export const airwayTraining = {
+  states: [
+    { id: "clear", title: "لولهٔ باز", description: "لوله در این حالت مقاومت اضافهٔ ناشی از تنگی ندارد." },
+    { id: "narrowing", title: "تنگی یا خم‌شدگی لوله", badge: "تنگی لوله", description: "تنگی نسبی مسیر، مقاومت دم و بازدم را بالا می‌برد." },
+    { id: "clot", title: "لختهٔ خون متحرک", badge: "لخته", description: "لختهٔ متحرک در مدل بیشتر راه بازدم را تنگ می‌کند و حبس هوا را افزایش می‌دهد." },
+    { id: "secretions", title: "ترشحات غلیظ", badge: "ترشحات", description: "ترشحات بخشی از مجرا را می‌گیرند و مقاومت دم و بازدم را بالا می‌برند." },
+    { id: "blocked", title: "انسداد کامل", badge: "انسداد کامل", description: "مسیر تبادل جریان با ریه بسته است. حجم تحویلی و جریان صفر و فشار سمت دستگاه نامشخص است." },
+  ],
+  sources: [
+    { label: "AARC · راهنمای راه هوایی مصنوعی", url: "https://www.aarc.org/wp-content/uploads/2022/10/cpg-artificial-airway-suctioning.pdf" },
+    { label: "گزارش مراقبت ویژه · انسداد با پلاگ مخاطی", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8647666/" },
+    { label: "گزارش بالینی · انسداد یک‌طرفهٔ لوله با لخته", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC7808852/" },
+  ],
+};
+
 export const conditions = [
   {
     id: "baseline",

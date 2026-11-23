@@ -39,6 +39,80 @@ test("higher resistance increases the peak-to-plateau gradient in VC", () => {
   assert.ok(Math.abs(obstructed.tidalVolume - baseline.tidalVolume) < 1);
 });
 
+test("a narrowed tube adds a flow-dependent peak-to-plateau gradient in VC", () => {
+  const clear = simulate(scenario, settings);
+  const narrowed = simulate(scenario, { ...settings, airway: "narrowing", airwaySeverity: 60 });
+  const addedGradient = (narrowed.metrics.peak - narrowed.metrics.plateau)
+    - (clear.metrics.peak - clear.metrics.plateau);
+  const inspiratoryFlow = narrowed.samples[0].flow / 60;
+
+  assert.equal(clear.airway.id, "clear");
+  assert.equal(clear.airway.severity, 0);
+  assert.ok(narrowed.airway.addedInspiratoryResistance > 0);
+  assert.ok(Math.abs(addedGradient - narrowed.airway.addedInspiratoryResistance * inspiratoryFlow) < 1e-9);
+  assert.ok(Math.abs(clear.metrics.tidalVolume - narrowed.metrics.tidalVolume) < 1e-9);
+  assert.deepEqual(simulate(scenario, { ...settings, airway: "narrowing", airwaySeverity: 0 }).metrics, clear.metrics);
+});
+
+test("tube secretions reduce delivered volume in PC at the same pressure target", () => {
+  const pc = { ...settings, mode: "PC" };
+  const clear = simulate(scenario, pc);
+  const secretions = simulate(scenario, { ...pc, airway: "secretions", airwaySeverity: 70 });
+  assert.equal(secretions.metrics.peak, clear.metrics.peak);
+  assert.ok(secretions.metrics.tidalVolume < clear.metrics.tidalVolume);
+  assert.ok(secretions.airway.totalInspiratoryResistance > scenario.resistance);
+  assert.equal(secretions.airway.totalExpiratoryResistance, secretions.airway.totalInspiratoryResistance);
+});
+
+test("a partial expiratory-valve clot impedes expiration and raises intrinsic PEEP", () => {
+  const narrow = simulate(scenario, { ...settings, airway: "narrowing", airwaySeverity: 40 });
+  const clot = simulate(scenario, { ...settings, airway: "clot", airwaySeverity: 60 });
+  assert.ok(Math.abs(clot.airway.totalInspiratoryResistance - narrow.airway.totalInspiratoryResistance) < 1e-9);
+  assert.ok(clot.airway.totalExpiratoryResistance > narrow.airway.totalExpiratoryResistance);
+  assert.ok(clot.metrics.intrinsicPeep > narrow.metrics.intrinsicPeep);
+  const cycle = 60 / settings.rr;
+  const narrowEndFlow = narrow.samples.findLast(sample => sample.time < cycle).flow;
+  const clotEndFlow = clot.samples.findLast(sample => sample.time < cycle).flow;
+  assert.ok(clotEndFlow < narrowEndFlow);
+
+  for (const sample of clot.samples) {
+    const resistance = sample.flow < 0 ? clot.airway.totalExpiratoryResistance : clot.airway.totalInspiratoryResistance;
+    assert.ok(Math.abs(sample.pressure - sample.alveolarPressure - resistance * sample.flow / 60) < 1e-9);
+  }
+});
+
+test("a fully blocked tube delivers no breaths and leaves pressures undefined", () => {
+  for (const mode of ["VC", "PC", "CPAP", "BILEVEL", "SIMV"]) {
+    const blocked = simulate(scenario, { ...settings, mode, airway: "blocked", airwaySeverity: 0 });
+    assert.deepEqual(blocked.airway, {
+      id: "blocked",
+      severity: 100,
+      addedInspiratoryResistance: null,
+      addedExpiratoryResistance: null,
+      totalInspiratoryResistance: null,
+      totalExpiratoryResistance: null,
+    });
+    assert.deepEqual(blocked.metrics, {
+      peak: null,
+      plateau: null,
+      intrinsicPeep: null,
+      tidalVolume: 0,
+      minuteVentilation: 0,
+      breathsPerMinute: 0,
+      expiratoryTime: null,
+    });
+    assert.equal(blocked.gas.status, "insufficient-ventilation");
+    assert.equal(blocked.gas.alveolarVentilation, 0);
+    assert.equal(blocked.gas.paco2, null);
+    assert.equal(blocked.samples.at(0).time, 0);
+    assert.equal(blocked.samples.at(-1).time, 14);
+    assert.ok(blocked.samples.every(({ time, pressure, alveolarPressure, flow, volume }, i, samples) =>
+      (i === 0 || time > samples[i - 1].time)
+      && pressure === null && alveolarPressure === null && flow === 0 && volume === 0,
+    ));
+  }
+});
+
 test("short VC inspirations show the final pressure before the expiration switch", () => {
   const stiff = { ...scenario, compliance: 15, resistance: 10 };
   const { samples, metrics } = simulate(stiff, { ...settings, rr: 35, vt: 800, ie: 5 });
