@@ -61,6 +61,130 @@ export const lesson = {
   sources: [sources.volumes, sources.spirometry, sources.mechanics, sources.niv, sources.harrison, sources.anesthesia, sources.aarc, sources.monitor],
 };
 
+// The lesson reader and downloadable handout use the same reviewed chapter data.
+// Worked values are teaching examples, not patient-specific ventilator settings.
+export const courseChapters = [
+  {
+    id: "minute-and-alveolar-ventilation",
+    title: "درس ۱ · از حجم جاری تا تهویه آلوئولی",
+    lead: "برای فهم دفع دی اکسید کربن، ابتدا هوای جابه جا شده در دقیقه را از هوایی که به تبادل گاز می رسد جدا می کنیم.",
+    sections: [
+      {
+        heading: "واژه ها و رابطه ها",
+        table: {
+          headers: ["اصطلاح و نام انگلیسی", "اختصار", "معنا یا رابطه"],
+          rows: [
+            ["حجم جاری (Tidal Volume)", "VT", "هوایی که در یک نفس دم و بازدم می شود؛ واحد نمونه میلی لیتر است."],
+            ["تعداد تنفس (Respiratory Rate)", "RR", "تعداد نفس ها در یک دقیقه؛ واحد نفس در دقیقه است."],
+            ["تهویه دقیقه ای (Minute Ventilation)", "VE", "حجم کل هوای جابه جا شده در دقیقه؛ VE = VT × RR."],
+            ["فضای مرده (Dead Space)", "VD", "بخشی از حجم هر نفس که در تبادل گاز شرکت نمی کند."],
+            ["تهویه آلوئولی (Alveolar Ventilation)", "VA", "برآورد هوایی که در دقیقه به تبادل گاز می رسد؛ VA = (VT − VD) × RR."],
+          ],
+        },
+      },
+      {
+        heading: "یک تهویه دقیقه ای، دو نتیجه متفاوت",
+        paragraphs: [
+          "در مثال فرضی اول، حجم جاری (Tidal Volume, VT) برابر ۴۵۰ میلی لیتر و تعداد تنفس (Respiratory Rate, RR) برابر ۱۴ نفس در دقیقه است. تهویه دقیقه ای (Minute Ventilation, VE) برابر ۶٫۳ لیتر در دقیقه می شود. با فرض فضای مرده (Dead Space, VD) برابر ۱۵۰ میلی لیتر در هر نفس، تهویه آلوئولی (Alveolar Ventilation, VA) برابر ۴٫۲ لیتر در دقیقه است.",
+          "در مثال دوم، حجم جاری ۳۰۰ میلی لیتر و تعداد تنفس ۲۱ نفس در دقیقه است. تهویه دقیقه ای باز هم ۶٫۳ لیتر در دقیقه است، اما با همان فرض فضای مرده، تهویه آلوئولی به ۳٫۱۵ لیتر در دقیقه می رسد. ثابت بودن فضای مرده فقط فرض این تمرین است؛ در بیمار واقعی می تواند تغییر کند.",
+        ],
+      },
+      {
+        heading: "پیوند بالینی و تمرین با مانیتور",
+        bullets: [
+          "افزایش فضای مرده (Dead Space) می تواند در برخی بیماری ها مانند آمبولی ریه (Pulmonary Embolism) سهم تهویه بی اثر را بیشتر کند.",
+          "در مد کنترل حجمی (Volume Control, VC) شبیه ساز، حجم جاری (Tidal Volume, VT) و تعداد تنفس (Respiratory Rate, RR) را جداگانه تغییر بده و عدد تهویه دقیقه ای (Minute Ventilation, VE) و منحنی حجم بر حسب زمان (Volume-Time Waveform) را مقایسه کن.",
+          "تهویه آلوئولی (Alveolar Ventilation, VA) در این محاسبه یک تقریب آموزشی است. تفسیر دی اکسید کربن خون به وضعیت بالینی، تولید دی اکسید کربن و فضای مرده واقعی هم وابسته است.",
+        ],
+      },
+    ],
+    workedExample: {
+      prompt: "حجم جاری (Tidal Volume, VT) ۵۰۰ میلی لیتر، تعداد تنفس (Respiratory Rate, RR) ۲۰ نفس در دقیقه و فضای مرده فرضی (Dead Space, VD) ۱۵۰ میلی لیتر است.",
+      steps: ["تهویه دقیقه ای (Minute Ventilation, VE) = ۵۰۰ × ۲۰ = ۱۰ لیتر در دقیقه.", "تهویه آلوئولی (Alveolar Ventilation, VA) = (۵۰۰ − ۱۵۰) × ۲۰ = ۷ لیتر در دقیقه."],
+    },
+    summary: [
+      "تهویه دقیقه ای (Minute Ventilation, VE) کل هوای جابه جا شده را می شمارد.",
+      "تهویه آلوئولی (Alveolar Ventilation, VA) در تقریب آموزشی سهم فضای مرده (Dead Space, VD) را از هر نفس کم می کند.",
+      "دو الگوی تنفس با تهویه دقیقه ای یکسان می توانند تهویه آلوئولی متفاوتی داشته باشند.",
+    ],
+    checkpoint: {
+      prompt: "اگر حجم جاری (Tidal Volume, VT) ۵۰۰ میلی لیتر، تعداد تنفس (Respiratory Rate, RR) ۱۲ و فضای مرده فرضی (Dead Space, VD) ۱۵۰ میلی لیتر باشد، تهویه دقیقه ای (Minute Ventilation, VE) و تهویه آلوئولی (Alveolar Ventilation, VA) چقدرند؟",
+      answer: "تهویه دقیقه ای ۶ و تهویه آلوئولی ۴٫۲ لیتر در دقیقه است: ۵۰۰ × ۱۲ و (۵۰۰ − ۱۵۰) × ۱۲ میلی لیتر در دقیقه.",
+    },
+    glossary: [
+      { term: "VT — Tidal Volume — حجم جاری", definition: "حجم هر نفس." },
+      { term: "RR — Respiratory Rate — تعداد تنفس", definition: "نفس ها در هر دقیقه." },
+      { term: "VE — Minute Ventilation — تهویه دقیقه ای", definition: "VT × RR؛ حجم کل در دقیقه." },
+      { term: "VD — Dead Space — فضای مرده", definition: "حجم بی مشارکت در تبادل گاز در مدل ساده." },
+      { term: "VA — Alveolar Ventilation — تهویه آلوئولی", definition: "(VT − VD) × RR در تقریب آموزشی." },
+    ],
+    sources: [sources.volumes, sources.mechanics, sources.harrison],
+  },
+  {
+    id: "compliance-resistance-and-pressures",
+    title: "درس ۲ · کامپلاینس، مقاومت و دو فشار مانیتور",
+    lead: "وقتی در مد کنترل حجمی (Volume Control, VC) حجم جاری یکسان می ماند، تغییر فشار پیک و پلاتو به تشخیص مکانیک تغییر یافته کمک می کند.",
+    sections: [
+      {
+        heading: "مفاهیم اصلی",
+        table: {
+          headers: ["اصطلاح و نام انگلیسی", "اختصار", "برداشت آموزشی"],
+          rows: [
+            ["کامپلاینس دستگاه تنفسی (Respiratory System Compliance)", "Crs", "تغییر حجم به ازای تغییر فشار؛ کاهش آن یعنی برای حجم یکسان، اختلاف فشار بیشتری لازم است."],
+            ["مقاومت راه هوایی (Airway Resistance)", "Raw", "افت فشار لازم برای ایجاد جریان هوا در مسیر لوله و راه هوایی."],
+            ["فشار پیک راه هوایی (Peak Airway Pressure)", "Ppeak", "بالاترین فشار دمی؛ اثر الاستیک و افت فشار در مسیر جریان را با هم نشان می دهد."],
+            ["فشار پلاتو (Plateau Pressure)", "Pplat", "فشار نزدیک به حالت بدون جریان در مکث دمیِ مناسب و بیمار بدون تلاش فعال."],
+            ["فشار مثبت انتهای بازدم (Positive End Expiratory Pressure)", "PEEP", "فشار پایه در انتهای بازدم؛ در مثال ساده از فشار پلاتو کسر می شود."],
+            ["فشار رانش (Driving Pressure)", "ΔP", "در مثال ساده، فشار پلاتو منهای فشار مثبت انتهای بازدم: ΔP = Pplat − PEEP."],
+          ],
+        },
+      },
+      {
+        heading: "دو الگوی تغییر فشار",
+        table: {
+          headers: ["الگو در شرایط قابل مقایسه", "سرنخ", "نمونه های احتمالی"],
+          rows: [
+            ["فشار پیک (Peak Airway Pressure, Ppeak) بالا می رود؛ فشار پلاتو (Plateau Pressure, Pplat) نزدیک مقدار پیشین است.", "افت فشار وابسته به جریان بیشتر شده و افزایش مقاومت راه هوایی (Airway Resistance) مطرح است.", "ترشحات لوله تراشه (Endotracheal Tube Secretions)، خمیدگی لوله (Tube Kinking)، تنگی برونش (Bronchoconstriction)."],
+            ["فشار پیک و پلاتو هر دو بالا می روند؛ فاصله آن ها تقریباً ثابت است.", "اختلاف فشار الاستیک بیشتر شده و کاهش کامپلاینس دستگاه تنفسی (Respiratory System Compliance) مطرح است.", "درگیری بافت ریه در سندرم زجر تنفسی حاد (Acute Respiratory Distress Syndrome, ARDS) یا فیبروز ریه (Pulmonary Fibrosis)، و عوامل دیواره قفسه سینه یا پلور مانند افیوژن پلور (Pleural Effusion)."],
+          ],
+        },
+        paragraphs: [
+          "مقایسه این دو فشار فقط با حجم جاری (Tidal Volume, VT)، جریان دمی (Inspiratory Flow)، فشار مثبت انتهای بازدم (Positive End Expiratory Pressure, PEEP)، زمان بندی و تلاش بیمارِ قابل مقایسه معنی دارد. فشار پلاتو (Plateau Pressure, Pplat) به مکث دمی و نبود جریان نیاز دارد.",
+          "افیوژن پلور (Pleural Effusion) می تواند کامپلاینس کل دستگاه تنفسی (Respiratory System Compliance) را کاهش دهد، اما محل تغییر الزاماً خود بافت ریه نیست. تغییر ظرفیت کل ریه (Total Lung Capacity, TLC) و تغییر کامپلاینس نیز یک مفهوم واحد نیستند.",
+        ],
+      },
+      {
+        heading: "کار با شبیه ساز",
+        bullets: [
+          "مد کنترل حجمی (Volume Control, VC) و یک حجم جاری (Tidal Volume, VT) ثابت را نگه دار. تنگی یا ترشحات لوله تراشه (Endotracheal Tube Secretions) را زیاد کن؛ فشار پیک (Peak Airway Pressure, Ppeak)، فشار پلاتو (Plateau Pressure, Pplat) و شکل منحنی جریان (Flow Waveform) را مقایسه کن.",
+          "سپس وضعیت راه هوایی را به باز برگردان و یک سناریوی کم کامپلاینس (Low Compliance) مانند سندرم زجر تنفسی حاد (Acute Respiratory Distress Syndrome, ARDS) را با وضعیت پایه مقایسه کن.",
+        ],
+      },
+    ],
+    workedExample: {
+      prompt: "در مثال ساده، حجم جاری (Tidal Volume, VT) برابر ۴۰۰ میلی لیتر است. کامپلاینس دستگاه تنفسی (Respiratory System Compliance, Crs) ابتدا ۴۰ و سپس ۲۰ میلی لیتر بر سانتی متر آب می شود.",
+      steps: ["اختلاف فشار الاستیک در وضعیت اول: ۴۰۰ ÷ ۴۰ = ۱۰ سانتی متر آب.", "اختلاف فشار الاستیک در وضعیت دوم: ۴۰۰ ÷ ۲۰ = ۲۰ سانتی متر آب.", "این حساب، تقریبِ حجم تقسیم بر کامپلاینس است و فشار مقاومتی، تلاش بیمار و فشار پایه را جداگانه در نظر نمی گیرد."],
+    },
+    summary: [
+      "کاهش کامپلاینس دستگاه تنفسی (Respiratory System Compliance) اختلاف فشار لازم برای حجم یکسان را بیشتر می کند.",
+      "افزایش مقاومت راه هوایی (Airway Resistance) در جریان یکسان معمولاً فاصله فشار پیک (Peak Airway Pressure, Ppeak) و فشار پلاتو (Plateau Pressure, Pplat) را بیشتر می کند.",
+      "بالا رفتن همزمان فشار پیک و پلاتو با فاصله تقریباً ثابت، سرنخی به نفع کاهش کامپلاینس است؛ شرایط اندازه گیری باید قابل مقایسه باشند.",
+    ],
+    checkpoint: {
+      prompt: "در مد کنترل حجمی (Volume Control, VC)، با حجم و جریان یکسان، اگر فشار پیک و فشار پلاتو هر دو بالا بروند ولی فاصله آن ها تقریباً ثابت بماند، به کدام تغییر بیشتر فکر می کنی؟",
+      answer: "کاهش کامپلاینس دستگاه تنفسی (Respiratory System Compliance). برای یک حجم یکسان، اختلاف فشار الاستیک بیشتری لازم شده است؛ عوامل درون ریه و دیواره قفسه سینه یا پلور هر دو می توانند مطرح باشند.",
+    },
+    glossary: [
+      { term: "Crs — Respiratory System Compliance — کامپلاینس دستگاه تنفسی", definition: "تغییر حجم به ازای تغییر فشار." },
+      { term: "Raw — Airway Resistance — مقاومت راه هوایی", definition: "افت فشار مرتبط با جریان در مسیر هوا." },
+      { term: "Ppeak — Peak Airway Pressure — فشار پیک راه هوایی", definition: "بیشینه فشار راه هوایی هنگام دم." },
+      { term: "Pplat — Plateau Pressure — فشار پلاتو", definition: "برآورد فشار در مکث دمی بدون جریان و شرایط مناسب." },
+      { term: "PEEP — Positive End Expiratory Pressure — فشار مثبت انتهای بازدم", definition: "فشار پایه در پایان بازدم." },
+    ],
+    sources: [sources.mechanics, sources.harrison, sources.aarc],
+  },
+];
+
 export const modes = [
   {
     id: "VC",
