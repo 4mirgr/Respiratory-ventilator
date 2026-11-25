@@ -1,27 +1,32 @@
-import { airwayTraining, courseChapters, lesson, scenarios, conditions, modes } from "./content.js?v=7-course";
+import { airwayTraining as airwayTrainingFa, courseChapters as courseChaptersFa, lesson as lessonFa, scenarios as scenariosFa, conditions as conditionsFa, modes as modesFa, contentEn } from "./content.js?v=8-i18n";
 import { simulate } from "./model.js?v=4-airway";
 import { createWaveforms } from "./waveforms.js?v=4-airway";
 import { createOrganMotion } from "./organ-motion.js?v=4-airway";
 
 const find = selector => document.querySelector(selector);
+const contentFa = { airwayTraining: airwayTrainingFa, courseChapters: courseChaptersFa, lesson: lessonFa, scenarios: scenariosFa, conditions: conditionsFa, modes: modesFa };
+let language = (() => { try { return localStorage.getItem("ventilator-language") === "en" ? "en" : "fa"; } catch { return "fa"; } })();
+let { airwayTraining, courseChapters, lesson, scenarios, conditions, modes } = language === "en" ? contentEn : contentFa;
+const tx = (fa, en) => language === "en" ? en : fa;
+
 const defaults = {
   mode: "VC", rr: 14, vt: 450, peep: 5, fio2: 21, ie: 2, inspPressure: 12, pressureSupport: 8,
   heartRate: null, airway: "clear", airwaySeverity: 50,
 };
 const settings = { ...defaults };
 const controlDefinitions = [
-  { key: "rr", label: "RR", name: "تعداد تنفس در دقیقه", min: 6, max: 35, step: 1 },
-  { key: "vt", label: "Vₜ", name: "حجم جاری هدف بر حسب میلی‌لیتر", min: 200, max: 800, step: 5, modes: ["VC", "SIMV"] },
-  { key: "peep", label: "PEEP", name: "فشار مثبت انتهای بازدم", min: 0, max: 20, step: 1 },
-  { key: "fio2", label: "FiO₂", name: "درصد اکسیژن دمی", min: 21, max: 100, step: 1, format: value => value + "%" },
-  { key: "ie", label: "I:E", name: "نسبت زمان دم به بازدم", min: 0.5, max: 5, step: 0.5, format: value => "1:" + value },
-  { key: "inspPressure", label: "ΔPinsp", name: "فشار دمی بالاتر از فشار بازدمی", min: 4, max: 28, step: 1, modes: ["PC", "BILEVEL"] },
-  { key: "pressureSupport", label: "PS", name: "فشار حمایتی در تنفس خودبه‌خودی", min: 0, max: 24, step: 1, modes: ["SIMV"] },
-  { key: "heartRate", label: "HR", name: "ضربان قلب در نمای شماتیک، بر حسب ضربان در دقیقه", min: 35, max: 190, step: 1 },
+  { key: "rr", label: "RR", name: "تعداد تنفس در دقیقه", nameEn: "Respiratory rate, breaths per minute", min: 6, max: 35, step: 1 },
+  { key: "vt", label: "Vₜ", name: "حجم جاری هدف بر حسب میلی‌لیتر", nameEn: "Target tidal volume, millilitres", min: 200, max: 800, step: 5, modes: ["VC", "SIMV"] },
+  { key: "peep", label: "PEEP", name: "فشار مثبت انتهای بازدم", nameEn: "Positive end-expiratory pressure", min: 0, max: 20, step: 1 },
+  { key: "fio2", label: "FiO₂", name: "درصد اکسیژن دمی", nameEn: "Inspired oxygen percentage", min: 21, max: 100, step: 1, format: value => value + "%" },
+  { key: "ie", label: "I:E", name: "نسبت زمان دم به بازدم", nameEn: "Inspiratory to expiratory time ratio", min: 0.5, max: 5, step: 0.5, format: value => "1:" + value },
+  { key: "inspPressure", label: "ΔPinsp", name: "فشار دمی بالاتر از فشار بازدمی", nameEn: "Inspiratory pressure above expiratory pressure", min: 4, max: 28, step: 1, modes: ["PC", "BILEVEL"] },
+  { key: "pressureSupport", label: "PS", name: "فشار حمایتی در تنفس خودبه‌خودی", nameEn: "Pressure support during spontaneous breaths", min: 0, max: 24, step: 1, modes: ["SIMV"] },
+  { key: "heartRate", label: "HR", name: "ضربان قلب در نمای شماتیک، بر حسب ضربان در دقیقه", nameEn: "Heart rate in the schematic, beats per minute", min: 35, max: 190, step: 1 },
 ];
 const mechanicsDefinitions = [
-  { key: "compliance", label: "کامپلاینس", name: "کامپلاینس دستگاه تنفسی بر حسب میلی‌لیتر بر سانتی‌متر آب", min: 15, max: 100 },
-  { key: "resistance", label: "مقاومت", name: "مقاومت راه هوایی بر حسب سانتی‌متر آب بر لیتر در ثانیه", min: 4, max: 40 },
+  { key: "compliance", label: "کامپلاینس", labelEn: "Compliance", name: "کامپلاینس دستگاه تنفسی بر حسب میلی‌لیتر بر سانتی‌متر آب", nameEn: "Respiratory system compliance, mL per cmH₂O", min: 15, max: 100 },
+  { key: "resistance", label: "مقاومت", labelEn: "Resistance", name: "مقاومت راه هوایی بر حسب سانتی‌متر آب بر لیتر در ثانیه", nameEn: "Airway resistance, cmH₂O per L/s", min: 4, max: 40 },
 ];
 const controlElements = new Map();
 const mechanicsElements = new Map();
@@ -40,11 +45,11 @@ let bicarbonate = null;
 let renderedScenario = null;
 
 const chart = createWaveforms(sample => {
-  const phase = sample.flow > 0.75 ? "دم" : sample.flow < -0.75 ? "بازدم" : "جریان کم";
+  const phase = sample.flow > 0.75 ? "inspiration" : sample.flow < -0.75 ? "expiration" : "low";
   for (const indicator of breathIndicators) {
     if (indicator.textContent !== phase) {
-      indicator.textContent = phase;
-      indicator.dataset.phase = phase === "دم" ? "inspiration" : phase === "بازدم" ? "expiration" : "low";
+      indicator.textContent = phase === "inspiration" ? tx("دم", "Inspiration") : phase === "expiration" ? tx("بازدم", "Expiration") : tx("جریان کم", "Low flow");
+      indicator.dataset.phase = phase;
     }
   }
   organMotion.updateBreath(sample);
@@ -70,18 +75,19 @@ function makeSourceLink(source) {
 }
 
 function fillSelect(select, items, label) {
+  select.replaceChildren();
   for (const item of items) select.add(new Option(label(item), item.id));
 }
 
 function createPager(view) {
-  const pages = [...view.querySelectorAll("[data-panel-page]")];
+  let pages = [...view.querySelectorAll("[data-panel-page]")];
   const nav = node("nav", undefined, "page-navigation");
-  nav.setAttribute("aria-label", "صفحه‌های این بخش");
-  const previous = node("button", "قبلی", "text-button");
-  const next = node("button", "بعدی", "text-button");
+  nav.setAttribute("aria-label", tx("صفحه‌های این بخش", "Pages in this section"));
+  const previous = node("button", tx("قبلی", "Previous"), "text-button");
+  const next = node("button", tx("بعدی", "Next"), "text-button");
   previous.type = next.type = "button";
   const select = node("select", undefined, "page-select");
-  select.setAttribute("aria-label", "انتخاب صفحه");
+  select.setAttribute("aria-label", tx("انتخاب صفحه", "Select page"));
   nav.append(previous, select, next);
   view.append(nav);
   let available = [];
@@ -96,6 +102,11 @@ function createPager(view) {
   }
 
   function refresh() {
+    pages = [...view.querySelectorAll("[data-panel-page]")];
+    nav.setAttribute("aria-label", tx("صفحه‌های این بخش", "Pages in this section"));
+    previous.textContent = tx("قبلی", "Previous");
+    next.textContent = tx("بعدی", "Next");
+    select.setAttribute("aria-label", tx("انتخاب صفحه", "Select page"));
     const prior = select.value;
     available = pages.filter(page => !page.closest("[data-optional-pages][hidden]"));
     select.replaceChildren(...available.map(page => new Option(page.dataset.pageTitle, page.dataset.panelPage)));
@@ -135,11 +146,11 @@ function buildControls(definitions, selector, elements, values) {
     input.min = config.min;
     input.max = config.max;
     input.step = config.step ?? 1;
-    input.setAttribute("aria-label", config.name);
+    input.setAttribute("aria-label", tx(config.name, config.nameEn ?? config.name));
     const label = node("label");
     label.htmlFor = input.id;
-    const abbreviation = node("abbr", config.label);
-    abbreviation.title = config.name;
+    const abbreviation = node("abbr", tx(config.label, config.labelEn ?? config.label));
+    abbreviation.title = tx(config.name, config.nameEn ?? config.name);
     const output = node("output");
     output.htmlFor = input.id;
     label.append(abbreviation, output);
@@ -159,6 +170,8 @@ function updateControls(heartRate) {
   const intermittent = settings.mode === "SIMV";
   for (const config of controlDefinitions) {
     const { input, output, wrapper, abbreviation } = controlElements.get(config.key);
+    abbreviation.title = tx(config.name, config.nameEn ?? config.name);
+    input.setAttribute("aria-label", abbreviation.title);
     const value = config.key === "heartRate" ? heartRate : settings[config.key];
     input.value = value;
     const display = config.format?.(value) ?? value;
@@ -166,7 +179,7 @@ function updateControls(heartRate) {
     input.setAttribute("aria-valuetext", String(display));
     wrapper.hidden = Boolean(config.modes && !config.modes.includes(settings.mode));
     if (config.key === "rr") {
-      const label = spontaneous ? "تعداد تنفس خودبه‌خودی مدل" : intermittent ? "تعداد نفس اجباری تنظیم‌شده" : config.name;
+      const label = spontaneous ? tx("تعداد تنفس خودبه‌خودی مدل", "Modelled spontaneous respiratory rate") : intermittent ? tx("تعداد نفس اجباری تنظیم‌شده", "Set mandatory respiratory rate") : tx(config.name, config.nameEn ?? config.name);
       abbreviation.textContent = intermittent ? "RR set" : config.label;
       abbreviation.title = label;
       input.setAttribute("aria-label", label);
@@ -186,7 +199,7 @@ function updateMonitor(metrics, scenario, mode) {
   setText("#metric-auto-peep", format(metrics.intrinsicPeep, 1));
   setText("#monitor-rr", format(metrics.breathsPerMinute, 1).replace(/\.0$/, ""));
   const seconds = Number.isFinite(metrics.expiratoryTime) ? format(metrics.expiratoryTime, 2) : "—";
-  setText("#monitor-note", "زمان بازدم " + seconds + " ثانیه · " + mode.watch);
+  setText("#monitor-note", tx("زمان بازدم ", "Expiratory time ") + seconds + tx(" ثانیه · ", " s · ") + mode.watch);
 }
 
 function updateLab(gas, scenario, condition, heartRate) {
@@ -198,14 +211,14 @@ function updateLab(gas, scenario, condition, heartRate) {
   setText("#monitor-spo2", format(gas.spo2));
   const gasNote = find("#gas-note");
   const gasMessage = {
-    "insufficient-ventilation": "در این وضعیت، تهویهٔ مؤثر برای برآورد گازهای خون در حالت پایدار کافی نیست.",
-    "oxygen-extraction-limit": "در این وضعیت مدل نمی‌تواند اکسیژن شریانی را برآورد کند.",
+    "insufficient-ventilation": tx("در این وضعیت، تهویهٔ مؤثر برای برآورد گازهای خون در حالت پایدار کافی نیست.", "Effective ventilation is insufficient for a steady-state blood gas estimate in this model."),
+    "oxygen-extraction-limit": tx("در این وضعیت مدل نمی‌تواند اکسیژن شریانی را برآورد کند.", "The model cannot estimate arterial oxygen under these conditions."),
   }[gas.status] ?? "";
   if (gasMessage !== gasNote.textContent) gasNote.textContent = gasMessage;
   gasNote.hidden = !gasMessage;
   let phState = "—";
   if (Number.isFinite(gas.ph)) {
-    phState = gas.ph < 7.35 ? "اسیدمی" : gas.ph > 7.45 ? "آلکالمی" : "محدودهٔ معمول";
+    phState = gas.ph < 7.35 ? tx("اسیدمی", "Acidemia") : gas.ph > 7.45 ? tx("آلکالمی", "Alkalemia") : tx("محدودهٔ معمول", "Typical range");
   }
   setText("#ph-state", phState);
   setText("#cardiac-output", format(scenario.cardiacOutput, 1) + " L/min");
@@ -258,7 +271,7 @@ function renderAirway(airway) {
   input.disabled = !active || blocked;
   input.value = airway.severity;
   output.value = format(airway.severity);
-  input.setAttribute("aria-valuetext", output.value + " از ۱۰۰ در مقیاس تمرین");
+  input.setAttribute("aria-valuetext", output.value + tx(" از ۱۰۰ در مقیاس تمرین", " of 100 on an educational scale"));
   setText("#airway-description", state.description);
   const resistance = value => Number.isFinite(value) ? format(value, 1) + " cmH₂O/(L/s)" : "—";
   setText("#airway-resistance-in", resistance(airway.addedInspiratoryResistance));
@@ -334,13 +347,13 @@ function showDeviceTab(active) {
 function setPaused(paused) {
   chart.setPaused(paused);
   organMotion.setPaused(paused);
-  const name = paused ? "اجرای نمایش موج‌ها و اندام‌ها" : "توقف نمایش موج‌ها و اندام‌ها";
+  const name = paused ? tx("اجرای نمایش موج‌ها و اندام‌ها", "Resume waveforms and organ animation") : tx("توقف نمایش موج‌ها و اندام‌ها", "Pause waveforms and organ animation");
   pauseButton.title = name;
   pauseButton.setAttribute("aria-label", name);
   pauseButton.setAttribute("aria-pressed", String(paused));
   const status = find("#monitor-status");
   status.classList.toggle("paused", paused);
-  status.lastElementChild.textContent = paused ? "متوقف" : "در حال اجرا";
+  status.lastElementChild.textContent = paused ? tx("متوقف", "Paused") : tx("در حال اجرا", "Running");
 }
 
 function appendSources(list, sources) {
@@ -397,29 +410,29 @@ function appendCoursePages(addPage) {
         }
       }
     }
-    coursePages.push(addPage(chapter.id + "-example", "مثال حل شده · " + chapter.title,
+    coursePages.push(addPage(chapter.id + "-example", tx("مثال حل شده · ", "Worked example · ") + chapter.title,
       node("p", chapter.workedExample.prompt), courseList(chapter.workedExample.steps, "course-points")));
-    coursePages.push(addPage(chapter.id + "-summary", "خلاصه · " + chapter.title,
+    coursePages.push(addPage(chapter.id + "-summary", tx("خلاصه · ", "Summary · ") + chapter.title,
       courseList(chapter.summary, "course-points")));
     const checkpoint = node("div", undefined, "course-checkpoint");
-    const reveal = node("button", "نمایش پاسخ", "secondary-button");
+    const reveal = node("button", tx("نمایش پاسخ", "Show answer"), "secondary-button");
     reveal.type = "button";
     const answer = node("p", chapter.checkpoint.answer);
     answer.hidden = true;
     reveal.addEventListener("click", () => { answer.hidden = false; reveal.hidden = true; });
     checkpoint.append(node("p", chapter.checkpoint.prompt), reveal, answer);
-    coursePages.push(addPage(chapter.id + "-checkpoint", "خودآزمایی · " + chapter.title, checkpoint));
+    coursePages.push(addPage(chapter.id + "-checkpoint", tx("خودآزمایی · ", "Self-check · ") + chapter.title, checkpoint));
     for (let start = 0; start < chapter.glossary.length; start += 3) {
       const entries = chapter.glossary.slice(start, start + 3).map(item => {
         const entry = node("div", undefined, "course-term");
         entry.append(node("strong", item.term), node("p", item.definition));
         return entry;
       });
-      coursePages.push(addPage(chapter.id + "-glossary-" + start, "واژه نامه · " + chapter.title, ...entries));
+      coursePages.push(addPage(chapter.id + "-glossary-" + start, tx("واژه نامه · ", "Glossary · ") + chapter.title, ...entries));
     }
     const references = node("ul", undefined, "reader-references");
     appendSources(references, chapter.sources);
-    coursePages.push(addPage(chapter.id + "-sources", "منابع · " + chapter.title, references));
+    coursePages.push(addPage(chapter.id + "-sources", tx("منابع · ", "References · ") + chapter.title, references));
   }
 }
 
@@ -431,12 +444,12 @@ function downloadHandbook() {
     for (const button of copy.querySelectorAll("button")) button.remove();
     return copy.outerHTML;
   }).join("\n");
-  const style = `@page{size:A4;margin:18mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#102533;background:#e9f4f5;line-height:1.8;margin:0;padding:24px}main{max-width:850px;margin:auto}header{background:#0b2534;color:white;padding:24px;border-radius:14px;margin-bottom:20px}h1{font-size:1.8rem;margin:0}h2{color:#086a75;font-size:1.22rem;margin:0 0 12px}section{background:white;padding:20px;margin:12px 0;border-radius:12px;break-inside:avoid}p{margin:8px 0}table{border-collapse:collapse;width:100%;font-size:.89rem}td,th{border:1px solid #bfd4da;padding:9px;vertical-align:top}th{background:#d9eef0}li{margin:5px 0}a{color:#086a75}.course-term{padding:8px;border-bottom:1px solid #d9eef0}@media print{body{background:white;padding:0}header,section{border-radius:0;box-shadow:none}}`;
-  const html = `<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>جزوه آموزشی ونتیلاتور</title><style>${style}</style><main><header><h1>جزوه آموزشی ونتیلاتور</h1><p>حجم ها، تهویه آلوئولی و مکانیک تنفس</p></header>${chapters}</main></html>`;
+  const style = `@page{size:A4;margin:18mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;direction:${language === "en" ? "ltr" : "rtl"};color:#102533;background:#e9f4f5;line-height:1.8;margin:0;padding:24px}main{max-width:850px;margin:auto}header{background:#0b2534;color:white;padding:24px;border-radius:14px;margin-bottom:20px}h1{font-size:1.8rem;margin:0}h2{color:#086a75;font-size:1.22rem;margin:0 0 12px}section{background:white;padding:20px;margin:12px 0;border-radius:12px;break-inside:avoid}p{margin:8px 0}table{border-collapse:collapse;width:100%;font-size:.89rem}td,th{border:1px solid #bfd4da;padding:9px;vertical-align:top}th{background:#d9eef0}li{margin:5px 0}a{color:#086a75}.course-term{padding:8px;border-bottom:1px solid #d9eef0}@media print{body{background:white;padding:0}header,section{border-radius:0;box-shadow:none}}`;
+  const html = `<!doctype html><html lang="${language}" dir="${language === "en" ? "ltr" : "rtl"}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${tx("جزوه آموزشی ونتیلاتور", "Ventilator learning handbook")}</title><style>${style}</style><main><header><h1>${tx("جزوه آموزشی ونتیلاتور", "Ventilator learning handbook")}</h1><p>${tx("حجم ها، تهویه آلوئولی و مکانیک تنفس", "Lung volumes, alveolar ventilation and respiratory mechanics")}</p></header>${chapters}</main></html>`;
   const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
   const link = node("a");
   link.href = url;
-  link.download = "ventilator-course-fa.html";
+  link.download = "ventilator-course-" + language + ".html";
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
@@ -446,6 +459,8 @@ function buildLesson() {
   setText("#lesson-intro", lesson.intro);
   const pages = find("#lesson-view .paged-pages");
   const quiz = find("#quiz-prompt").closest("section");
+  for (const page of pages.querySelectorAll("[data-panel-page]")) if (page !== quiz && page.dataset.panelPage !== "intro") page.remove();
+  coursePages.length = 0;
 
   function addPage(key, title, ...content) {
     const page = node("section", undefined, "lesson-panel");
@@ -468,7 +483,7 @@ function buildLesson() {
       entry.append(abbreviation, node("h3", item.name), node("strong", item.value), node("p", item.definition));
       return entry;
     });
-    addPage(key + "-" + number, volume.abbr + " و " + lesson.volumes[index + 1].abbr, ...entries);
+    addPage(key + "-" + number, volume.abbr + tx(" و ", " and ") + lesson.volumes[index + 1].abbr, ...entries);
   }
   pages.append(quiz);
   appendCoursePages(addPage);
@@ -482,7 +497,7 @@ function buildLesson() {
     const number = start / 4 + 1;
     const list = node("ul", undefined, "reader-references");
     appendSources(list, lesson.sources.slice(start, start + 4));
-    addPage("sources-" + number, "منابع درس " + number, list);
+    addPage("sources-" + number, tx("منابع درس ", "Lesson references ") + number, list);
   }
   buildQuiz();
 }
@@ -493,6 +508,8 @@ function buildQuiz() {
   const feedback = find("#quiz-feedback");
   setText("#quiz-prompt", prompt);
 
+  container.replaceChildren();
+  feedback.hidden = true;
   options.forEach((option, index) => {
     const answer = node("button", option, "quiz-option");
     answer.type = "button";
@@ -506,12 +523,89 @@ function buildQuiz() {
       answer.classList.add(isCorrect ? "correct" : "incorrect");
       answer.setAttribute("aria-pressed", "true");
       feedback.hidden = false;
-      feedback.textContent = isCorrect ? "درست است. " + explanation : "دوباره تلاش کن. به حجم باقی‌مانده پس از یک بازدم معمولی فکر کن.";
+      feedback.textContent = isCorrect ? tx("درست است. ", "Correct. ") + explanation : tx("دوباره تلاش کن. به حجم باقی‌مانده پس از یک بازدم معمولی فکر کن.", "Try again. Think about the air left after a normal exhalation.");
     });
     container.append(answer);
   });
 }
 
+const staticValues = new WeakMap();
+function applyStaticLanguage() {
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === "en" ? "ltr" : "rtl";
+  const attributes = ["aria-label", "title", "alt", "content", "href", "page-title"];
+  const elements = document.querySelectorAll("[data-en], [data-en-aria-label], [data-en-title], [data-en-alt], [data-en-content], [data-en-href], [data-en-page-title]");
+  for (const element of elements) {
+    let originals = staticValues.get(element);
+    if (!originals) {
+      originals = { text: element.textContent };
+      for (const attribute of attributes) originals[attribute] = attribute === "page-title" ? element.dataset.pageTitle : element.getAttribute(attribute);
+      staticValues.set(element, originals);
+    }
+    if (element.hasAttribute("data-en")) element.textContent = language === "en" ? element.dataset.en : originals.text;
+    for (const attribute of attributes) {
+      const english = element.getAttribute("data-en-" + attribute);
+      if (english === null) continue;
+      const value = language === "en" ? english : originals[attribute];
+      if (attribute === "page-title") element.dataset.pageTitle = value;
+      else if (value === null) element.removeAttribute(attribute);
+      else element.setAttribute(attribute, value);
+    }
+  }
+  const button = find("#language-toggle");
+  if (button) {
+    button.textContent = language === "en" ? "فارسی" : "EN";
+    button.setAttribute("aria-label", tx("تغییر زبان به انگلیسی", "Switch language to Persian"));
+    button.title = button.getAttribute("aria-label");
+  }
+}
+
+function switchLanguage(next) {
+  if (next === language) return;
+  language = next;
+  try { localStorage.setItem("ventilator-language", language); } catch {}
+  ({ airwayTraining, courseChapters, lesson, scenarios, conditions, modes } = language === "en" ? contentEn : contentFa);
+  applyStaticLanguage();
+  for (const [select, items, label] of [
+    [caseSelect, scenarios, item => item.title],
+    [conditionSelect, conditions, item => item.title],
+    [modeSelect, modes, item => item.short + " — " + item.title],
+    [airwaySelect, airwayTraining.states, item => item.title],
+  ]) {
+    const selected = select.value;
+    fillSelect(select, items, label);
+    select.value = selected;
+  }
+  for (const config of [...mechanicsDefinitions, ...controlDefinitions]) {
+    const control = (mechanicsElements.get(config.key) ?? controlElements.get(config.key));
+    control.abbreviation.textContent = tx(config.label, config.labelEn ?? config.label);
+    control.abbreviation.title = tx(config.name, config.nameEn ?? config.name);
+    control.input.setAttribute("aria-label", control.abbreviation.title);
+  }
+  const severity = airwayElements.get("airwaySeverity");
+  severity.abbreviation.textContent = tx("شدت فرضی تنگی", "Narrowing severity");
+  severity.abbreviation.title = tx("شدت تنگی در مقیاس آموزشی", "Illustrative airway narrowing severity");
+  severity.input.setAttribute("aria-label", severity.abbreviation.title);
+  const airwaySources = find("#airway-sources");
+  airwaySources.replaceChildren();
+  appendSources(airwaySources, airwayTraining.sources);
+  buildLesson();
+  for (const pager of pagers.values()) pager.refresh();
+  renderedScenario = null;
+  setPaused(chart.paused);
+  render();
+  updateFullscreenLabel();
+}
+
+function updateFullscreenLabel() {
+  const button = find("#fullscreen-toggle");
+  const fullscreen = Boolean(document.fullscreenElement);
+  button.setAttribute("aria-pressed", String(fullscreen));
+  button.lastElementChild.textContent = fullscreen ? tx("خروج از تمام‌صفحه", "Exit fullscreen") : tx("تمام‌صفحه", "Fullscreen");
+}
+
+applyStaticLanguage();
+find("#language-toggle")?.addEventListener("click", () => switchLanguage(language === "en" ? "fa" : "en"));
 fillSelect(caseSelect, scenarios, scenario => scenario.title);
 fillSelect(conditionSelect, conditions, condition => condition.title);
 fillSelect(modeSelect, modes, mode => mode.short + " — " + mode.title);
@@ -520,7 +614,7 @@ caseSelect.value = "normal";
 buildControls(controlDefinitions, "#controls", controlElements, settings);
 buildControls(mechanicsDefinitions, "#mechanic-controls", mechanicsElements, mechanicsOverrides);
 buildControls(
-  [{ key: "airwaySeverity", label: "شدت فرضی تنگی", name: "شدت تنگی در مقیاس آموزشی", min: 0, max: 100 }],
+  [{ key: "airwaySeverity", label: "شدت فرضی تنگی", labelEn: "Narrowing severity", name: "شدت تنگی در مقیاس آموزشی", nameEn: "Illustrative airway narrowing severity", min: 0, max: 100 }],
   "#airway-control-group", airwayElements, settings,
 );
 appendSources(find("#airway-sources"), airwayTraining.sources);
@@ -578,9 +672,5 @@ if (document.fullscreenEnabled) {
       fullscreenButton.hidden = true;
     }
   });
-  document.addEventListener("fullscreenchange", () => {
-    const fullscreen = Boolean(document.fullscreenElement);
-    fullscreenButton.setAttribute("aria-pressed", String(fullscreen));
-    fullscreenButton.lastElementChild.textContent = fullscreen ? "خروج از تمام‌صفحه" : "تمام‌صفحه";
-  });
+  document.addEventListener("fullscreenchange", updateFullscreenLabel);
 }
