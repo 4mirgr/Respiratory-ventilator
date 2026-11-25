@@ -4,31 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a1220">
-  <meta name="description" content="آموزش فارسی فیزیولوژی تنفس و تمرین با ونتیلاتور شبیه‌سازی‌شده">
-  <title>آزمایشگاه تنفس | شبیه‌ساز ونتیلاتور</title>
+  <meta name="description" content="آموزش فارسی فیزیولوژی تنفس و تمرین با ونتیلاتور شبیه‌سازی‌شده" data-en-content="Learn respiratory physiology and practice with a simulated ventilator">
+  <title data-en="Respiratory Lab | Ventilator Simulator">آزمایشگاه تنفس | شبیه‌ساز ونتیلاتور</title>
   <link rel="icon" href="./assets/favicon.png?v=lung" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" sizes="180x180">
-  <meta name="apple-mobile-web-app-title" content="ونتیلاتور">
-  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="ونتیلاتور" data-en-content="Ventilator">
+  <link rel="manifest" href="./manifest.webmanifest" data-en-href="./manifest.en.webmanifest">
   <link rel="stylesheet" href="./styles.css?v=5-lung">
   <link rel="stylesheet" href="./organ-motion.css?v=4-airway">
-  <link rel="stylesheet" href="./device.css?v=7-course">
-  <script type="module" src="./app.js?v=7-course"></script>
+  <link rel="stylesheet" href="./device.css?v=8-bilingual">
+  <script type="module" src="./app.js?v=8-bilingual"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="shell header-inner">
-      <a class="brand" href="./" aria-label="آزمایشگاه تنفس، صفحهٔ اصلی">
+      <a class="brand" href="./" aria-label="آزمایشگاه تنفس، صفحهٔ اصلی" data-en-aria-label="Respiratory Lab, home">
         <img class="brand-mark" src="./assets/icon-192.png" width="36" height="36" alt="">
-        <span>آزمایشگاه تنفس</span>
+        <span data-en="Resp Lab">آزمایشگاه تنفس</span>
       </a>
-      <nav class="view-nav" aria-label="بخش‌های آموزش">
-        <button id="tab-simulator" class="nav-button selected" type="button" aria-controls="simulator-view" aria-pressed="true">شبیه‌ساز</button>
-        <button id="tab-lesson" class="nav-button" type="button" aria-controls="lesson-view" aria-pressed="false">درس و تمرین</button>
+      <nav class="view-nav" aria-label="بخش‌های آموزش" data-en-aria-label="Learning sections">
+        <button id="tab-simulator" class="nav-button selected" type="button" aria-controls="simulator-view" aria-pressed="true" data-en="Simulator">شبیه‌ساز</button>
+        <button id="tab-lesson" class="nav-button" type="button" aria-controls="lesson-view" aria-pressed="false" data-en="Lessons">درس و تمرین</button>
       </nav>
-      <button id="fullscreen-toggle" class="text-button fullscreen-button" type="button" aria-pressed="false" hidden><span aria-hidden="true">⛶</span> <span>تمام‌صفحه</span></button>
+      <button id="fullscreen-toggle" class="text-button fullscreen-button" type="button" aria-pressed="false" hidden><span aria-hidden="true">⛶</span> <span data-en="Fullscreen">تمام‌صفحه</span></button>
+      <button id="language-toggle" class="language-toggle" type="button" aria-label="تغییر زبان به انگلیسی" data-en-aria-label="Switch language to Persian" title="English" data-en-title="فارسی">EN</button>
       <span class="physician-signature">
-        <span>دکتر گرامی</span>
+        <span data-en="Dr. Gerami">دکتر گرامی</span>
         <img src="./assets/dr-gerami.webp" width="34" height="34" alt="">
       </span>
     </div>
@@ -43,57 +44,57 @@
         <div id="device-screen" class="device-screen">
           <header class="device-header">
             <div class="device-heading">
-              <h1 id="simulator-title" tabindex="-1">ونتیلاتور آموزشی</h1>
+              <h1 id="simulator-title" tabindex="-1" data-en="Training Ventilator">ونتیلاتور آموزشی</h1>
               <div class="device-patient">
                 <span id="monitor-mode" class="mono monitor-mode" dir="ltr">VC</span>
-                <span id="monitor-case">مکانیک پایهٔ تنفس</span>
+                <span id="monitor-case" data-en="Baseline Respiratory Mechanics">مکانیک پایهٔ تنفس</span>
                 <button id="airway-status" class="airway-status" type="button" hidden></button>
               </div>
             </div>
             <div class="monitor-actions">
-              <span id="monitor-status" class="live-state"><i aria-hidden="true"></i><span>در حال اجرا</span></span>
-              <button id="pause-monitor" class="icon-button" type="button" aria-pressed="false" aria-label="توقف نمایش موج‌ها و اندام‌ها" title="توقف نمایش"><span class="playback-icon" aria-hidden="true"></span></button>
-              <button id="reset-monitor" type="button" class="text-button"><span aria-hidden="true">↺</span> بازنشانی</button>
+              <span id="monitor-status" class="live-state"><i aria-hidden="true"></i><span data-en="Running">در حال اجرا</span></span>
+              <button id="pause-monitor" class="icon-button" type="button" aria-pressed="false" aria-label="توقف نمایش موج‌ها و اندام‌ها" data-en-aria-label="Pause waveforms and organ movement" title="توقف نمایش" data-en-title="Pause display"><span class="playback-icon" aria-hidden="true"></span></button>
+              <button id="reset-monitor" type="button" class="text-button"><span aria-hidden="true">↺</span> <span data-en="Reset">بازنشانی</span></button>
             </div>
           </header>
 
-          <nav class="device-navigation" aria-label="صفحه‌های ونتیلاتور">
-            <button id="device-monitor-tab" type="button" aria-controls="device-monitor-view" aria-pressed="true">مانیتور</button>
-            <button id="device-settings-tab" type="button" aria-controls="device-settings-view" aria-pressed="false">بیمار و تنظیمات</button>
-            <button id="device-airway-tab" type="button" aria-controls="device-airway-view" aria-pressed="false">لولهٔ تراشه</button>
-            <button id="device-physiology-tab" type="button" aria-controls="device-physiology-view" aria-pressed="false">قلب، ریه و ABG</button>
+          <nav class="device-navigation" aria-label="صفحه‌های ونتیلاتور" data-en-aria-label="Ventilator views">
+            <button id="device-monitor-tab" type="button" aria-controls="device-monitor-view" aria-pressed="true" data-en="Monitor">مانیتور</button>
+            <button id="device-settings-tab" type="button" aria-controls="device-settings-view" aria-pressed="false" data-en="Patient &amp; Settings">بیمار و تنظیمات</button>
+            <button id="device-airway-tab" type="button" aria-controls="device-airway-view" aria-pressed="false" data-en="Endotracheal Tube">لولهٔ تراشه</button>
+            <button id="device-physiology-tab" type="button" aria-controls="device-physiology-view" aria-pressed="false" data-en="Heart, Lungs &amp; ABG">قلب، ریه و ABG</button>
           </nav>
 
           <section id="device-monitor-view" class="device-view device-monitor" aria-labelledby="device-monitor-tab">
             <div class="monitor-layout">
               <div class="waveforms">
                 <figure class="wave wave-pressure">
-                  <figcaption><strong>فشار راه هوایی</strong><span dir="ltr" id="pressure-unit">cmH₂O</span><span id="pressure-unavailable" hidden>در انسداد کامل برآورد نمی‌شود</span></figcaption>
-                  <canvas id="pressure-chart" role="img" aria-label="نمودار زندهٔ فشار راه هوایی بر حسب زمان"></canvas>
+                  <figcaption><strong data-en="Airway Pressure">فشار راه هوایی</strong><span dir="ltr" id="pressure-unit">cmH₂O</span><span id="pressure-unavailable" hidden data-en="Unavailable in complete blockage">در انسداد کامل برآورد نمی‌شود</span></figcaption>
+                  <canvas id="pressure-chart" role="img" aria-label="نمودار زندهٔ فشار راه هوایی بر حسب زمان" data-en-aria-label="Live airway pressure versus time waveform"></canvas>
                 </figure>
                 <figure class="wave wave-flow">
-                  <figcaption><strong>جریان</strong><span dir="ltr">L/min</span></figcaption>
-                  <canvas id="flow-chart" role="img" aria-label="نمودار زندهٔ جریان دم و بازدم بر حسب زمان"></canvas>
+                  <figcaption><strong data-en="Flow">جریان</strong><span dir="ltr">L/min</span></figcaption>
+                  <canvas id="flow-chart" role="img" aria-label="نمودار زندهٔ جریان دم و بازدم بر حسب زمان" data-en-aria-label="Live inspiratory and expiratory flow versus time waveform"></canvas>
                 </figure>
                 <figure class="wave wave-volume">
-                  <figcaption><strong>حجم نسبی ریه</strong><span dir="ltr">mL</span></figcaption>
-                  <canvas id="volume-chart" role="img" aria-label="نمودار زندهٔ حجم نسبی ریه بر حسب زمان به ثانیه"></canvas>
+                  <figcaption><strong data-en="Relative Lung Volume">حجم نسبی ریه</strong><span dir="ltr">mL</span></figcaption>
+                  <canvas id="volume-chart" role="img" aria-label="نمودار زندهٔ حجم نسبی ریه بر حسب زمان به ثانیه" data-en-aria-label="Live relative lung volume versus time in seconds"></canvas>
                 </figure>
               </div>
               <div class="device-organs">
-                <div class="organ-header"><h2>قلب و ریه</h2><span id="monitor-breath-phase" class="phase">دم</span></div>
-                <div id="monitor-organ-image" class="organ-display organ-display-compact" role="img" aria-label="نمای متحرک قلب در مرکز ریه‌ها"></div>
+                <div class="organ-header"><h2 data-en="Heart &amp; Lungs">قلب و ریه</h2><span id="monitor-breath-phase" class="phase" data-en="Inhalation">دم</span></div>
+                <div id="monitor-organ-image" class="organ-display organ-display-compact" role="img" aria-label="نمای متحرک قلب در مرکز ریه‌ها" data-en-aria-label="Animated heart centered within lungs"></div>
                 <div class="organ-readout" dir="ltr">
                   <div class="heart-readout"><span>HR</span><strong id="monitor-heart-rate">—</strong><small>bpm</small></div>
-                  <div title="تعداد کل نفس‌های مدل در دقیقه"><span>RR</span><strong id="monitor-rr">—</strong><small>/min</small></div>
+                  <div title="تعداد کل نفس‌های مدل در دقیقه" data-en-title="Total modeled breaths per minute"><span>RR</span><strong id="monitor-rr">—</strong><small>/min</small></div>
                 </div>
               </div>
               <div class="monitor-metrics">
                 <div class="metric metric-pressure"><span dir="ltr">Ppeak</span><strong id="metric-peak" dir="ltr">—</strong><small dir="ltr">cmH₂O</small></div>
-                <div class="metric metric-pressure"><span dir="ltr" title="برآورد فشار پلاتو">Pplat*</span><strong id="metric-plateau" dir="ltr">—</strong><small dir="ltr">cmH₂O</small></div>
+                <div class="metric metric-pressure"><span dir="ltr" title="برآورد فشار پلاتو" data-en-title="Estimated plateau pressure">Pplat*</span><strong id="metric-plateau" dir="ltr">—</strong><small dir="ltr">cmH₂O</small></div>
                 <div class="metric metric-flow"><span dir="ltr">Vₜ</span><strong id="metric-vt" dir="ltr">—</strong><small dir="ltr">mL</small></div>
                 <div class="metric metric-flow"><span dir="ltr">V̇E</span><strong id="metric-ve" dir="ltr">—</strong><small dir="ltr">L/min</small></div>
-                <div class="metric metric-volume"><span dir="ltr" title="برآورد فشار مثبت ذاتی پایان بازدم">Auto-PEEP*</span><strong id="metric-auto-peep" dir="ltr">—</strong><small dir="ltr">cmH₂O</small></div>
+                <div class="metric metric-volume"><span dir="ltr" title="برآورد فشار مثبت ذاتی پایان بازدم" data-en-title="Estimated intrinsic positive end-expiratory pressure">Auto-PEEP*</span><strong id="metric-auto-peep" dir="ltr">—</strong><small dir="ltr">cmH₂O</small></div>
                 <div class="metric metric-oxygen"><span dir="ltr">SpO₂</span><strong id="monitor-spo2" dir="ltr">—</strong><small dir="ltr">%</small></div>
               </div>
             </div>
@@ -101,11 +102,11 @@
 
           <section id="device-settings-view" class="device-view paged-view device-settings" aria-labelledby="device-settings-tab" hidden>
             <div class="paged-pages">
-              <section data-panel-page="settings" data-page-title="بیمار و مد" class="settings-body">
+              <section data-panel-page="settings" data-page-title="بیمار و مد" data-en-page-title="Patient and mode" class="settings-body">
                 <div class="pickers">
-                  <label for="case-select">سناریوی بیمار</label>
+                  <label for="case-select" data-en="Patient scenario">سناریوی بیمار</label>
                   <select id="case-select"></select>
-                  <label for="mode-select">مد ونتیلاتور</label>
+                  <label for="mode-select" data-en="Ventilator mode">مد ونتیلاتور</label>
                   <select id="mode-select" dir="ltr"></select>
                 </div>
                 <div class="mode-summary">
@@ -114,36 +115,36 @@
                 </div>
                 <p id="monitor-note" class="monitor-note"></p>
               </section>
-              <section data-panel-page="mechanics" data-page-title="مکانیک و بیماری همراه" class="settings-body" hidden>
+              <section data-panel-page="mechanics" data-page-title="مکانیک و بیماری همراه" data-en-page-title="Mechanics and comorbidity" class="settings-body" hidden>
                 <div class="pickers">
-                  <label for="condition-select">شرایط همراه قلبی‌ریوی</label>
+                  <label for="condition-select" data-en="Cardiopulmonary condition">شرایط همراه قلبی‌ریوی</label>
                   <select id="condition-select"></select>
                 </div>
                 <p id="condition-description"></p>
-                <div id="mechanic-controls" class="controls" aria-label="مکانیک بیمار"></div>
-                <p id="mechanics-override-note" class="estimate-note" hidden>مقادیر دستی مکانیک در مقایسهٔ شرایط همراه ثابت می‌مانند.</p>
+                <div id="mechanic-controls" class="controls" aria-label="مکانیک بیمار" data-en-aria-label="Patient mechanics"></div>
+                <p id="mechanics-override-note" class="estimate-note" hidden data-en="Manual mechanics values remain fixed when comparing associated conditions.">مقادیر دستی مکانیک در مقایسهٔ شرایط همراه ثابت می‌مانند.</p>
               </section>
-              <section data-panel-page="case" data-page-title="خلاصهٔ کیس" class="case-context" hidden>
+              <section data-panel-page="case" data-page-title="خلاصهٔ کیس" data-en-page-title="Case summary" class="case-context" hidden>
                 <h2 id="case-title"></h2>
                 <p id="case-summary"></p>
                 <p id="case-clinic"></p>
-                <p class="estimate-note">فشار پلاتو و فشار ذاتی برآورد مدل‌اند. در مدهای خودبه‌خودی، پلاتو نمایش داده نمی‌شود.</p>
+                <p class="estimate-note" data-en="Plateau and intrinsic pressure are model estimates. Plateau is unavailable in spontaneous modes.">فشار پلاتو و فشار ذاتی برآورد مدل‌اند. در مدهای خودبه‌خودی، پلاتو نمایش داده نمی‌شود.</p>
                 <a id="case-source" target="_blank" rel="noopener noreferrer"></a>
               </section>
               <div id="case-training" data-optional-pages hidden>
-                <section data-panel-page="exercise" data-page-title="تمرین بالینی" class="case-context" hidden>
-                  <h2>تمرین بالینی</h2>
+                <section data-panel-page="exercise" data-page-title="تمرین بالینی" data-en-page-title="Clinical exercise" class="case-context" hidden>
+                  <h2 data-en="Clinical exercise">تمرین بالینی</h2>
                   <p id="case-presentation"></p>
                   <p id="case-challenge" class="case-challenge"></p>
-                  <button id="case-open-monitor" type="button" class="text-button">رفتن به مانیتور</button>
+                  <button id="case-open-monitor" type="button" class="text-button" data-en="Open monitor">رفتن به مانیتور</button>
                 </section>
-                <section data-panel-page="answer" data-page-title="پاسخ تمرین" class="case-context" hidden>
-                  <h2>پاسخ تمرین</h2>
+                <section data-panel-page="answer" data-page-title="پاسخ تمرین" data-en-page-title="Exercise answer" class="case-context" hidden>
+                  <h2 data-en="Exercise answer">پاسخ تمرین</h2>
                   <p id="case-answer"></p>
                   <p id="case-limitations"></p>
                 </section>
-                <section data-panel-page="case-sources" data-page-title="منابع کیس" class="case-context" hidden>
-                  <h2>منابع تمرین</h2>
+                <section data-panel-page="case-sources" data-page-title="منابع کیس" data-en-page-title="Case sources" class="case-context" hidden>
+                  <h2 data-en="Exercise references">منابع تمرین</h2>
                   <ul id="case-training-references" class="reader-references"></ul>
                 </section>
               </div>
@@ -152,46 +153,46 @@
 
           <section id="device-airway-view" class="device-view paged-view" aria-labelledby="device-airway-tab" hidden>
             <div class="paged-pages">
-              <section data-panel-page="airway" data-page-title="وضعیت لوله" class="airway-controls">
+              <section data-panel-page="airway" data-page-title="وضعیت لوله" data-en-page-title="Tube status" class="airway-controls">
                 <div class="airway-editor">
                   <div class="pickers">
-                    <label for="airway-select">وضعیت لولهٔ تراشه</label>
+                    <label for="airway-select" data-en="Endotracheal tube status">وضعیت لولهٔ تراشه</label>
                     <select id="airway-select"></select>
                   </div>
                   <div id="airway-control-group" class="controls"></div>
                   <p id="airway-description"></p>
-                  <p class="estimate-note">شدت بر حسب امتیاز آموزشی است.</p>
+                  <p class="estimate-note" data-en="Severity is an educational score.">شدت بر حسب امتیاز آموزشی است.</p>
                 </div>
                 <div class="airway-visual">
                   <div id="airway-tube" class="airway-tube" data-airway="clear" aria-hidden="true"><span class="airway-lumen"></span></div>
                   <dl class="airway-readouts">
-                    <div><dt>مقاومت اضافهٔ دم</dt><dd id="airway-resistance-in" dir="ltr">—</dd></div>
-                    <div><dt>مقاومت اضافهٔ بازدم</dt><dd id="airway-resistance-out" dir="ltr">—</dd></div>
+                    <div><dt data-en="Added inspiratory resistance">مقاومت اضافهٔ دم</dt><dd id="airway-resistance-in" dir="ltr">—</dd></div>
+                    <div><dt data-en="Added expiratory resistance">مقاومت اضافهٔ بازدم</dt><dd id="airway-resistance-out" dir="ltr">—</dd></div>
                   </dl>
-                  <button id="airway-open-monitor" type="button" class="text-button">دیدن اثر روی مانیتور</button>
+                  <button id="airway-open-monitor" type="button" class="text-button" data-en="View effect on monitor">دیدن اثر روی مانیتور</button>
                 </div>
               </section>
-              <section data-panel-page="airway-guide" data-page-title="تمرین موج‌ها" class="case-context" hidden>
-                <h2>مقایسهٔ مدها در تنگی لوله</h2>
-                <p>در کیس پایه و با سایر تنظیمات ثابت، لولهٔ باز را با تنگی نسبی در <bdi>VC</bdi> و <bdi>PC</bdi> مقایسه کن.</p>
-                <p>در <bdi>VC</bdi> فاصلهٔ <bdi>Ppeak</bdi> تا <bdi>Pplat</bdi> بیشتر می‌شود و حجم هدف در مدل حفظ می‌شود. در <bdi>PC</bdi>، با فشار و زمان دم ثابت، حجم جاری می‌تواند افت کند.</p>
-                <p>در هر دو مد، دنبالهٔ جریان بازدم و <bdi>Auto-PEEP</bdi> را بررسی کن. این تمرین انسداد نسبی را تقریب می‌زند. تشخیص علت به ارزیابی بالینی نیاز دارد.</p>
+              <section data-panel-page="airway-guide" data-page-title="تمرین موج‌ها" data-en-page-title="Waveform exercise" class="case-context" hidden>
+                <h2 data-en="Compare modes with tube narrowing">مقایسهٔ مدها در تنگی لوله</h2>
+                <p data-en="In the baseline case, keep all other settings constant and compare an open tube with partial narrowing in volume control (VC) and pressure control (PC).">در کیس پایه و با سایر تنظیمات ثابت، لولهٔ باز را با تنگی نسبی در <bdi>VC</bdi> و <bdi>PC</bdi> مقایسه کن.</p>
+                <p data-en="In volume control (VC), the gap between peak airway pressure (Ppeak) and plateau pressure (Pplat) increases while the model maintains target tidal volume. In pressure control (PC), tidal volume may fall at fixed inspiratory pressure and time.">در <bdi>VC</bdi> فاصلهٔ <bdi>Ppeak</bdi> تا <bdi>Pplat</bdi> بیشتر می‌شود و حجم هدف در مدل حفظ می‌شود. در <bdi>PC</bdi>، با فشار و زمان دم ثابت، حجم جاری می‌تواند افت کند.</p>
+                <p data-en="In both modes, examine the expiratory flow tail and intrinsic positive end-expiratory pressure (Auto-PEEP). This exercise approximates partial obstruction. Identifying the cause requires clinical assessment.">در هر دو مد، دنبالهٔ جریان بازدم و <bdi>Auto-PEEP</bdi> را بررسی کن. این تمرین انسداد نسبی را تقریب می‌زند. تشخیص علت به ارزیابی بالینی نیاز دارد.</p>
               </section>
-              <section data-panel-page="airway-sources" data-page-title="منابع لوله" class="case-context" hidden>
-                <h2>منابع انسداد لوله</h2>
+              <section data-panel-page="airway-sources" data-page-title="منابع لوله" data-en-page-title="Tube references" class="case-context" hidden>
+                <h2 data-en="Tube obstruction references">منابع انسداد لوله</h2>
                 <ul id="airway-sources" class="reader-references"></ul>
-                <p>شدت، درصد انسداد واقعی را نشان نمی‌دهد. در انسداد کامل، جریان و حجم تحویلی صفرند. فشار سمت دستگاه به سقف فشار و پاسخ دستگاه وابسته است و در این حالت برآورد نمی‌شود.</p>
+                <p data-en="Severity does not represent the actual percentage of obstruction. With complete blockage, delivered flow and volume are zero. Machine-side pressure depends on the device pressure limit and response, so it is not estimated here.">شدت، درصد انسداد واقعی را نشان نمی‌دهد. در انسداد کامل، جریان و حجم تحویلی صفرند. فشار سمت دستگاه به سقف فشار و پاسخ دستگاه وابسته است و در این حالت برآورد نمی‌شود.</p>
               </section>
             </div>
           </section>
 
           <section id="device-physiology-view" class="device-view paged-view device-physiology" aria-labelledby="device-physiology-tab" hidden>
             <div class="paged-pages">
-              <section data-panel-page="gas" data-page-title="گاز خون" class="gas-page">
+              <section data-panel-page="gas" data-page-title="گاز خون" data-en-page-title="Blood gas" class="gas-page">
                 <header class="panel-header">
                   <div>
-                    <h2>تبادل گاز و اسید–باز</h2>
-                    <p>گاز خون شریانی در حالت پایدار مدل</p>
+                    <h2 data-en="Gas Exchange and Acid–Base Balance">تبادل گاز و اسید–باز</h2>
+                    <p data-en="Modeled steady-state arterial blood gas">گاز خون شریانی در حالت پایدار مدل</p>
                   </div>
                   <span class="mono panel-badge" dir="ltr">ABG</span>
                 </header>
@@ -204,72 +205,72 @@
                 </div>
                 <p id="gas-note" class="estimate-note" role="status" hidden></p>
                 <div class="setting bicarbonate-control">
-                  <label for="control-hco3">بیکربنات مدل <output id="value-hco3" for="control-hco3"></output></label>
+                  <label for="control-hco3"><span data-en="Model bicarbonate">بیکربنات مدل</span> <output id="value-hco3" for="control-hco3"></output></label>
                   <input id="control-hco3" type="range" min="10" max="42" step="1">
                 </div>
               </section>
-              <section data-panel-page="anatomy" data-page-title="قلب و ریه" class="anatomy" hidden>
+              <section data-panel-page="anatomy" data-page-title="قلب و ریه" data-en-page-title="Heart and lungs" class="anatomy" hidden>
                 <header class="panel-header">
-                  <div><h2>قلب و ریه</h2><p>حرکت شماتیک اندام‌ها در هر چرخه</p></div>
-                  <span id="breath-phase" class="phase">دم</span>
+                  <div><h2 data-en="Heart &amp; Lungs">قلب و ریه</h2><p data-en="Schematic organ movement in each cycle">حرکت شماتیک اندام‌ها در هر چرخه</p></div>
+                  <span id="breath-phase" class="phase" data-en="Inhalation">دم</span>
                 </header>
                 <div class="anatomy-image">
-                  <div id="organ-image" class="organ-display" role="img" aria-label="نمای متحرک ریه‌ها، نای و قلب"></div>
-                  <div class="anatomy-value anatomy-co"><span>برون‌ده قلبی</span><strong id="cardiac-output" dir="ltr">—</strong></div>
-                  <div class="anatomy-value anatomy-shunt"><span>ضربان شماتیک</span><strong id="heart-rate" dir="ltr">—</strong></div>
+                  <div id="organ-image" class="organ-display" role="img" aria-label="نمای متحرک ریه‌ها، نای و قلب" data-en-aria-label="Animated lungs, trachea and heart"></div>
+                  <div class="anatomy-value anatomy-co"><span data-en="Cardiac output">برون‌ده قلبی</span><strong id="cardiac-output" dir="ltr">—</strong></div>
+                  <div class="anatomy-value anatomy-shunt"><span data-en="Schematic heart rate">ضربان شماتیک</span><strong id="heart-rate" dir="ltr">—</strong></div>
                 </div>
-                <p class="physiology-note">اسلایدر HR در مانیتور، سرعت تپش تصویر را تغییر می‌دهد. برون‌ده قلبی از شرایط کیس محاسبه می‌شود.</p>
+                <p class="physiology-note" data-en="The monitor HR slider changes the visual heartbeat speed. Cardiac output is calculated from the case condition.">اسلایدر HR در مانیتور، سرعت تپش تصویر را تغییر می‌دهد. برون‌ده قلبی از شرایط کیس محاسبه می‌شود.</p>
               </section>
-              <section data-panel-page="alveoli" data-page-title="آلوئول و شانت" class="alveolar-panel" hidden>
-                <img src="./assets/alveoli.webp" alt="نمای شماتیک خوشهٔ آلوئول و مویرگ‌های اطراف" width="450" height="300">
+              <section data-panel-page="alveoli" data-page-title="آلوئول و شانت" data-en-page-title="Alveoli and shunt" class="alveolar-panel" hidden>
+                <img src="./assets/alveoli.webp" alt="نمای شماتیک خوشهٔ آلوئول و مویرگ‌های اطراف" data-en-alt="Schematic alveolar cluster and surrounding capillaries" width="450" height="300">
                 <div>
-                  <h2>آلوئول و مویرگ ریوی</h2>
+                  <h2 data-en="Alveolus and Pulmonary Capillary">آلوئول و مویرگ ریوی</h2>
                   <dl>
-                    <div><dt>تهویهٔ آلوئولی</dt><dd id="alveolar-ventilation" dir="ltr">—</dd></div>
-                    <div><dt>فشار اکسیژن آلوئولی</dt><dd id="alveolar-oxygen" dir="ltr">—</dd></div>
-                    <div><dt>سهم شانت در مدل</dt><dd id="shunt-value" dir="ltr">—</dd></div>
+                    <div><dt data-en="Alveolar ventilation">تهویهٔ آلوئولی</dt><dd id="alveolar-ventilation" dir="ltr">—</dd></div>
+                    <div><dt data-en="Alveolar oxygen pressure">فشار اکسیژن آلوئولی</dt><dd id="alveolar-oxygen" dir="ltr">—</dd></div>
+                    <div><dt data-en="Modeled shunt fraction">سهم شانت در مدل</dt><dd id="shunt-value" dir="ltr">—</dd></div>
                   </dl>
-                  <p>اکسیژن از آلوئول به خون می‌رود و دی‌اکسیدکربن از خون به آلوئول برمی‌گردد.</p>
+                  <p data-en="Oxygen moves from the alveolus into blood, while carbon dioxide moves from blood into the alveolus.">اکسیژن از آلوئول به خون می‌رود و دی‌اکسیدکربن از خون به آلوئول برمی‌گردد.</p>
                 </div>
               </section>
-              <section data-panel-page="chemistry" data-page-title="بافر بیکربنات" class="chemistry" hidden>
-                <h2>بافر بیکربنات</h2>
+              <section data-panel-page="chemistry" data-page-title="بافر بیکربنات" data-en-page-title="Bicarbonate buffer" class="chemistry" hidden>
+                <h2 data-en="Bicarbonate Buffer">بافر بیکربنات</h2>
                 <div class="chemistry-formula" dir="ltr">CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻</div>
-                <p>با بیکربنات ثابت، افزایش <bdi>PaCO₂</bdi> موجب کاهش <bdi>pH</bdi> می‌شود.</p>
+                <p data-en="With bicarbonate held constant, an increase in arterial carbon dioxide pressure (PaCO₂) lowers pH.">با بیکربنات ثابت، افزایش <bdi>PaCO₂</bdi> موجب کاهش <bdi>pH</bdi> می‌شود.</p>
               </section>
             </div>
           </section>
 
-          <div id="controls" class="controls device-controls" aria-label="کنترل‌های سریع ونتیلاتور"></div>
+          <div id="controls" class="controls device-controls" aria-label="کنترل‌های سریع ونتیلاتور" data-en-aria-label="Ventilator quick controls"></div>
         </div>
       </div>
     </section>
 
     <section id="lesson-view" class="paged-view" aria-labelledby="lesson-title" hidden>
       <header class="lesson-heading">
-        <h1 id="lesson-title" tabindex="-1">حجم‌ها و ظرفیت‌های ریه</h1>
+        <h1 id="lesson-title" tabindex="-1" data-en="Lung Volumes and Capacities">حجم‌ها و ظرفیت‌های ریه</h1>
         <div class="lesson-actions">
-          <button id="download-handbook" type="button" class="secondary-button">دریافت جزوه</button>
-          <button id="open-simulator" type="button" class="secondary-button">بازگشت به مانیتور</button>
+          <button id="download-handbook" type="button" class="secondary-button" data-en="Download handbook">دریافت جزوه</button>
+          <button id="open-simulator" type="button" class="secondary-button" data-en="Back to monitor">بازگشت به مانیتور</button>
         </div>
       </header>
       <div class="paged-pages">
-        <section data-panel-page="intro" data-page-title="شروع درس" class="lesson-panel">
-          <h2>اجزای ظرفیت کل ریه</h2>
+        <section data-panel-page="intro" data-page-title="شروع درس" data-en-page-title="Lesson start" class="lesson-panel">
+          <h2 data-en="Components of Total Lung Capacity">اجزای ظرفیت کل ریه</h2>
           <p id="lesson-intro"></p>
-          <div class="volume-diagram" dir="ltr" role="img" aria-label="اجزای ظرفیت کل ریه، از پایین به بالا حجم باقیمانده، ذخیرهٔ بازدمی، حجم جاری و ذخیرهٔ دمی">
+          <div class="volume-diagram" dir="ltr" role="img" aria-label="اجزای ظرفیت کل ریه، از پایین به بالا حجم باقیمانده، ذخیرهٔ بازدمی، حجم جاری و ذخیرهٔ دمی" data-en-aria-label="Components of total lung capacity, from bottom to top: residual volume, expiratory reserve volume, tidal volume and inspiratory reserve volume">
             <div>IRV</div><div>Vₜ</div><div>ERV</div><div>RV</div>
           </div>
         </section>
-        <section data-panel-page="quiz" data-page-title="خودآزمایی" class="lesson-panel quiz" hidden>
-          <h2>خودت را محک بزن</h2>
+        <section data-panel-page="quiz" data-page-title="خودآزمایی" data-en-page-title="Self-check" class="lesson-panel quiz" hidden>
+          <h2 data-en="Check your understanding">خودت را محک بزن</h2>
           <p id="quiz-prompt"></p>
           <div id="quiz-options"></div>
           <p id="quiz-feedback" role="status" hidden></p>
         </section>
       </div>
     </section>
-    <noscript><p>برای اجرای شبیه‌ساز، جاوااسکریپت مرورگر را فعال کن.</p></noscript>
+    <noscript><p data-en="Enable JavaScript to run the simulator.">برای اجرای شبیه‌ساز، جاوااسکریپت مرورگر را فعال کن.</p></noscript>
   </main>
 
 </body>

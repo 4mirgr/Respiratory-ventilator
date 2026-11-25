@@ -660,3 +660,56 @@ body:has(#simulator-view:not([hidden])) main {
   #lesson-view .lesson-heading { align-items: flex-start; }
   #lesson-view .lesson-actions { flex-wrap: wrap; justify-content: end; }
 }
+.language-toggle {
+  flex: none;
+  min-width: 32px;
+  height: 28px;
+  padding: 2px 4px;
+  border: 1px solid #476879;
+  border-radius: 7px;
+  background: #14303c;
+  color: #8cece3;
+  font: 700 .7rem ui-sans-serif, sans-serif;
+  letter-spacing: .02em;
+}
+.language-toggle:hover { background: #1b4753; }
+html[lang="en"] .device-screen, html[lang="en"] #lesson-view { direction: ltr; }
+html[lang="en"] .course-table, html[lang="en"] .course-points { direction: ltr; }
+@media (max-width: 620px) {
+  .language-toggle { min-width: 24px; height: 25px; padding: 1px 2px; font-size: .6rem; }
+}
+
+@media (max-width: 470px) {
+  html[lang="en"] .site-header .header-inner { width: calc(100% - 8px); gap: 3px; }
+  html[lang="en"] .site-header .brand { gap: 2px; font-size: .72rem; }
+  html[lang="en"] .site-header .brand-mark { width: 24px; height: 24px; }
+  html[lang="en"] .site-header .view-nav { gap: 1px; margin-inline-start: 0; }
+  html[lang="en"] .site-header .nav-button { padding-inline: 3px; font-size: .72rem; }
+  html[lang="en"] .physician-signature { gap: 2px; font-size: .68rem; }
+  html[lang="en"] .physician-signature img { width: 22px; height: 22px; padding: 1px; }
+  html[lang="en"] .language-toggle { min-width: 23px; }
+}
+@media (max-width: 350px) {
+  html[lang="en"] .site-header .brand > span { display: none; }
+}
+@media (max-width: 420px) {
+  html[lang="fa"] .site-header .header-inner { width: calc(100% - 8px); gap: 2px; }
+  html[lang="fa"] .site-header .brand { gap: 2px; font-size: .74rem; }
+  html[lang="fa"] .site-header .brand-mark { width: 24px; height: 24px; }
+  html[lang="fa"] .site-header .view-nav { gap: 1px; margin-inline-start: 0; }
+  html[lang="fa"] .site-header .nav-button { padding-inline: 3px; font-size: .72rem; }
+  html[lang="fa"] .physician-signature { gap: 2px; font-size: .67rem; }
+  html[lang="fa"] .physician-signature img { width: 22px; height: 22px; padding: 1px; }
+  html[lang="fa"] .language-toggle { min-width: 23px; }
+}
+@media (max-width: 350px) {
+  html[lang="fa"] .site-header .brand > span { display: none; }
+}
+@media (min-width: 421px) and (max-width: 470px) {
+  html[lang="fa"] .site-header .header-inner { width: calc(100% - 12px); gap: 4px; }
+  html[lang="fa"] .site-header .brand { gap: 4px; font-size: .82rem; }
+  html[lang="fa"] .site-header .nav-button { padding-inline: 5px; font-size: .76rem; }
+  html[lang="fa"] .site-header .view-nav { gap: 2px; margin-inline-start: 0; }
+  html[lang="fa"] .physician-signature { gap: 3px; font-size: .7rem; }
+  html[lang="fa"] .physician-signature img { width: 25px; height: 25px; }
+}
