@@ -635,3 +635,175 @@ export const scenarios = [
   },
   ...guidedScenarios,
 ].map(withEffects);
+// English material mirrors the Persian teaching data. Numeric model inputs and stable IDs stay shared.
+const englishSourceLabels = new Map([
+  [sources.volumes.url, "OpenStax · The Process of Breathing"],
+  [sources.spirometry.url, "ATS/ERS · Spirometry Standardization"],
+  [sources.mechanics.url, "Critical Care · Respiratory Mechanics Review"],
+  [sources.niv.url, "ERS/ATS · Noninvasive Ventilation Guideline"],
+  [sources.monitor.url, "Dräger · Evita V800 Monitor and Guide"],
+  [sources.harrison.url, "Harrison's 22nd ed. · Mechanical Ventilatory Support, Ch. 313"],
+  [sources.anesthesia.url, "Miller's Anesthesia, 10th ed. · Respiratory Physiology and Monitoring"],
+  [sources.aarc.url, "AARC · Patient–Ventilator Assessment Guideline, 2024"],
+  [acuteAsthmaReview.url, "Journal of Clinical Medicine · Severe Asthma in Critical Care"],
+  [atelectasisMechanisms.url, "Anesthesiology · Perioperative Atelectasis Mechanisms"],
+  [aspirationReview.url, "Journal of Dental Anesthesia and Pain Medicine · Aspiration Pneumonitis and Pneumonia"],
+  [atsOhs.url, "ATS · Obesity Hypoventilation Syndrome Guideline"],
+  [myasthenicCrisis.url, "The Neurohospitalist · Myasthenic Crisis Review"],
+  [sepsis2026.url, "SCCM · Surviving Sepsis Campaign 2026"],
+  ["https://ginasthma.org/2026-gina-strategy-report/", "GINA · 2026 Asthma Strategy Report"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC9885487/", "Anesthesiology · Perioperative Atelectasis, Clinical Effects"],
+  ["https://accessmedicine.mhmedical.com/content.aspx?legacysectionid=grippi6_ch069", "Fishman's Pulmonary Diseases and Disorders, 6th ed. · Ch. 69"],
+  ["https://accessmedicine.mhmedical.com/content.aspx?bookid=3541&sectionid=294613915", "Harrison's 22nd ed. · Pneumonia, Ch. 131"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC6945800/", "ATS · Corrected Discharge Recommendation"],
+  ["https://accessmedicine.mhmedical.com/content.aspx?bookid=3541&sectionid=294821597", "Harrison's 22nd ed. · Disorders of Ventilation, Ch. 307"],
+  ["https://onlinelibrary.wiley.com/doi/full/10.1002/mus.27832", "Muscle & Nerve · Myasthenic Crisis Review"],
+  ["https://www.merckmanuals.com/professional/multimedia/clinical-calculator/winters-formula-for-expected-pco2", "Merck Manual · Winter's Formula"],
+  ["https://accessmedicine.mhmedical.com/content.aspx?bookid=3541&sectionid=293067890", "Harrison's 22nd ed. · Acidosis and Alkalosis, Ch. 58"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC10111975/", "GOLD · 2023 Report Summary"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC10870893/", "ATS · Official ARDS Guideline"],
+  ["https://www.cdc.gov/tb/hcp/clinical-overview/index.html", "CDC · Clinical Overview of Tuberculosis"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC3651925/", "Tuberculosis and Respiratory Diseases · DAH Review"],
+  ["https://www.merckmanuals.com/professional/cardiovascular-disorders/heart-failure/pulmonary-edema", "Merck Manual · Pulmonary Edema"],
+  ["https://www.merckmanuals.com/professional/cardiovascular-disorders/heart-failure/right-heart-failure-and-cor-pulmonale", "Merck Manual · Right Heart Failure and Cor Pulmonale"],
+  ["https://www.escardio.org/guidelines/clinical-practice-guidelines/all-esc-practice-guidelines/acute-pulmonary-embolism/", "ESC · Acute Pulmonary Embolism Guideline"],
+  ["https://www.aafp.org/afp/2022/0200/p144", "American Family Physician · Hemoptysis Assessment"],
+  ["https://www.nhlbi.nih.gov/health/idiopathic-pulmonary-fibrosis", "NHLBI · Idiopathic Pulmonary Fibrosis"],
+  ["https://www.aarc.org/wp-content/uploads/2022/10/cpg-artificial-airway-suctioning.pdf", "AARC · Artificial Airway Suctioning Guideline"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC8647666/", "Critical Care Case Report · Mucus Plug Obstruction"],
+  ["https://pmc.ncbi.nlm.nih.gov/articles/PMC7808852/", "Clinical Case Report · One-way Tube Obstruction by Blood Clot"],
+]);
+const sourceEn = source => ({...source, label: englishSourceLabels.get(source.url) || source.label});
+const lessonEn = {
+  title: "Lung Volumes and Capacities",
+  intro: "A quiet breath, maximal inspiration and the air left after maximal expiration are different quantities. These internally consistent numbers describe a fictional example. Actual values depend on height, age, sex and measurement conditions.",
+  volumes: [
+    ["Tidal volume", "500 mL", "Air entering during a quiet inspiration."],
+    ["Inspiratory reserve volume", "3,000 mL", "Additional air inhaled after a quiet inspiration, up to maximal inspiration."],
+    ["Expiratory reserve volume", "1,100 mL", "Additional air exhaled after a quiet expiration, down to maximal expiration."],
+    ["Residual volume", "1,200 mL", "Air remaining after maximal expiration."],
+    ["Inspiratory capacity", "3,500 mL", "Maximum inspiration from the end of quiet expiration; tidal volume plus inspiratory reserve volume."],
+    ["Functional residual capacity", "2,300 mL", "Volume remaining at the end of quiet expiration; expiratory reserve plus residual volume."],
+    ["Vital capacity", "4,600 mL", "Maximum exhalable volume after maximal inspiration; inspiratory reserve plus tidal volume plus expiratory reserve."],
+    ["Total lung capacity", "5,800 mL", "Volume at maximal inspiration; vital capacity plus residual volume."],
+  ].map(([name,value,definition],index)=>({abbr:lesson.volumes[index].abbr,name,value,definition})),
+  concepts: [
+    {title:"What does spirometry measure?",body:"A spirometer measures air moving at the mouth. Residual volume, functional residual capacity and total lung capacity require lung-volume methods such as plethysmography or gas dilution."},
+    {title:"Compliance and resistance",body:"Respiratory system compliance relates a change in volume to a change in pressure. Airway resistance relates airflow to the associated pressure drop. During volume-controlled ventilation without active patient effort, an inspiratory hold stops flow so plateau pressure can be estimated."},
+    {title:"Oxygenation and ventilation",body:"Oxygenation is assessed with measures such as arterial oxygen tension (PaO₂) and peripheral oxygen saturation (SpO₂). Carbon dioxide elimination depends on alveolar ventilation and carbon dioxide production. Dead-space air does not participate in gas exchange."},
+    {title:"pH, PaCO₂ and bicarbonate",body:"With bicarbonate held constant, increasing arterial carbon dioxide tension (PaCO₂) lowers pH. With PaCO₂ held constant, increasing bicarbonate raises pH. Arterial blood gas interpretation requires all three values, expected compensation and clinical context."},
+  ],
+  question:{prompt:"In this example, how much air remains in the lungs after a quiet expiration?",options:["500 mL (tidal volume, VT)","1,200 mL (residual volume, RV)","2,300 mL (functional residual capacity, FRC)","5,800 mL (total lung capacity, TLC)"],correct:2,explanation:"At the end of quiet expiration, expiratory reserve volume and residual volume remain. Their sum is functional residual capacity: 2,300 mL."},
+  sources:lesson.sources.map(sourceEn),
+};
+const modesEn = [
+  {title:"Volume control",description:"Mandatory breaths target a set tidal volume; the pressure required varies with respiratory mechanics. This exercise models constant inspiratory flow.",uses:"Compare effects of airway resistance and respiratory system compliance on pressure at a fixed volume target.",watch:"At constant flow, increased resistance widens the peak-to-plateau pressure gap. Plateau pressure requires an inspiratory hold and suitable measurement conditions."},
+  {title:"Pressure control",description:"Mandatory breaths target an inspiratory pressure above positive end-expiratory pressure (PEEP) for a set inspiratory time. Tidal volume depends on pressure difference, mechanics and time.",uses:"Compare tidal volume when compliance or resistance changes at the same target inspiratory pressure.",watch:"Read airway pressure and flow waveform alongside delivered tidal volume. Volume can change despite an unchanged pressure target."},
+  {title:"Continuous positive airway pressure",description:"One positive pressure level is maintained throughout inspiration and expiration while the patient breathes spontaneously.",uses:"Explore airway support and oxygenation in spontaneous breathing. Examples include obstructive sleep apnea and selected cardiogenic pulmonary edema cases.",watch:"One pressure level spans the cycle. In this simulator, respiratory rate and inspiratory-to-expiratory time ratio set the assumed timing of spontaneous breaths."},
+  {title:"Bilevel positive airway pressure",description:"This exercise depicts bilevel noninvasive ventilation with inspiratory positive airway pressure (IPAP) and expiratory positive airway pressure (EPAP). Their difference is pressure support.",uses:"Compare inspiratory support and expiratory pressure. Acute exacerbation of chronic obstructive pulmonary disease (COPD) with hypercapnic respiratory failure is a clinical example that requires individual assessment.",watch:"Here, IPAP equals EPAP plus inspiratory pressure difference. Respiratory rate and inspiratory-to-expiratory ratio set hypothetical spontaneous breathing timing. The model has no backup rate."},
+  {title:"Synchronized intermittent mandatory ventilation",description:"The ventilator delivers a set number of mandatory breaths synchronized to patient effort. Spontaneous breaths between them may receive pressure support according to settings.",uses:"Compare mandatory and spontaneous waveforms on the same monitor.",watch:"Set respiratory rate and target volume apply to mandatory breaths. Monitored rate counts all breaths; displayed tidal volume averages mandatory and spontaneous breaths."},
+].map((item,index)=>({...modes[index],...item}));
+const airwayTrainingEn={states:[
+  {title:"Open tube",description:"No added resistance from tube narrowing."},
+  {title:"Narrowed or kinked tube",badge:"Tube narrowing",description:"Partial narrowing increases inspiratory and expiratory resistance."},
+  {title:"Mobile blood clot",badge:"Clot",description:"In this scenario, the mobile clot increases expiratory resistance more strongly."},
+  {title:"Thick secretions",badge:"Secretions",description:"Thick secretions increase inspiratory and expiratory resistance."},
+  {title:"Complete obstruction",badge:"Complete blockage",description:"No flow passes to the lung. Delivered volume and flow are zero; device-side pressure is undetermined."},
+].map((item,index)=>({...airwayTraining.states[index],...item})),sources:airwayTraining.sources.map(sourceEn)};
+const conditionsEn=[
+  {title:"Baseline",description:"Case parameters without an added condition."},
+  {title:"Low cardiac output",description:"This exercise reduces blood flow pumped per minute relative to the selected case baseline."},
+  {title:"Rapid arrhythmia with lower output",description:"A rapid rhythm with reduced filling and lower cardiac output. Its modeled effect is specific to this scenario."},
+  {title:"Additional pulmonary edema",description:"Fluid in the lungs reduces compliance and increases shunt fraction. Follow the effects in the lung image and arterial blood gas display."},
+].map((item,index)=>({...conditions[index],...item}));
+const courseChaptersEn=[
+ {id:courseChapters[0].id,title:"Lesson 1 · From tidal volume to alveolar ventilation",lead:"To understand carbon dioxide removal, distinguish all air moved each minute from air contributing to gas exchange.",sections:[
+  {heading:"Terms and relationships",table:{headers:["Term","Abbreviation","Meaning or equation"],rows:[
+   ["Tidal volume","VT","Air inhaled and exhaled in one breath, expressed here in milliliters."],
+   ["Respiratory rate","RR","Breaths per minute."],
+   ["Minute ventilation","VE","Total air moved per minute: VE = VT × RR."],
+   ["Dead space","VD","Portion of each breath that does not participate in gas exchange."],
+   ["Alveolar ventilation","VA","Approximate gas-exchanging air per minute: VA = (VT − VD) × RR."],
+  ]}},
+  {heading:"The same minute ventilation, different outcomes",paragraphs:[
+   "In fictional example one, tidal volume (VT) is 450 mL and respiratory rate (RR) is 14 breaths/min. Minute ventilation (VE) is 6.3 L/min. Assuming dead space (VD) is 150 mL/breath, alveolar ventilation (VA) is 4.2 L/min.",
+   "In example two, tidal volume is 300 mL and respiratory rate is 21 breaths/min. Minute ventilation is still 6.3 L/min, but assumed alveolar ventilation falls to 3.15 L/min. Constant dead space is a teaching assumption; it can change in a real patient.",
+  ]},
+  {heading:"Clinical link and monitor exercise",bullets:[
+   "In some conditions, including pulmonary embolism, increased dead space can increase ineffective ventilation.",
+   "In volume control (VC), change tidal volume (VT) and respiratory rate (RR) separately. Compare minute ventilation (VE) and the volume–time waveform.",
+   "This calculation approximates alveolar ventilation (VA). Blood carbon dioxide also depends on actual dead space, carbon dioxide production and clinical context.",
+  ]},
+ ],workedExample:{prompt:"Tidal volume (VT) is 500 mL, respiratory rate (RR) is 20 breaths/min and assumed dead space (VD) is 150 mL/breath.",steps:["Minute ventilation (VE) = 500 × 20 = 10 L/min.","Alveolar ventilation (VA) = (500 − 150) × 20 = 7 L/min."]},
+ summary:["Minute ventilation (VE) counts all air moved each minute.","This simplified alveolar ventilation (VA) calculation subtracts dead space (VD) from each breath.","Two patterns with equal minute ventilation can have different alveolar ventilation."],
+ checkpoint:{prompt:"If tidal volume (VT) is 500 mL, respiratory rate (RR) is 12 and assumed dead space (VD) is 150 mL, what are minute ventilation (VE) and alveolar ventilation (VA)?",answer:"VE is 6 L/min and VA is 4.2 L/min: 500 × 12 and (500 − 150) × 12 mL/min."},
+ glossary:[{term:"VT — Tidal volume",definition:"Air volume of one breath."},{term:"RR — Respiratory rate",definition:"Breaths per minute."},{term:"VE — Minute ventilation",definition:"VT × RR, total air moved per minute."},{term:"VD — Dead space",definition:"Air volume excluded from gas exchange in this simple model."},{term:"VA — Alveolar ventilation",definition:"(VT − VD) × RR in this educational approximation."}],sources:courseChapters[0].sources.map(sourceEn)},
+ {id:courseChapters[1].id,title:"Lesson 2 · Compliance, resistance and two pressure readings",lead:"At the same tidal volume during volume control (VC), changes in peak and plateau pressures provide clues to altered respiratory mechanics.",sections:[
+  {heading:"Core concepts",table:{headers:["Term","Abbreviation","Interpretation"],rows:[
+   ["Respiratory system compliance","Crs","Volume change per pressure change. Lower compliance requires a larger pressure difference for the same volume."],
+   ["Airway resistance","Raw","Pressure drop associated with flow through the tube and airways."],
+   ["Peak airway pressure","Ppeak","Highest inspiratory pressure, combining elastic and flow-dependent contributions."],
+   ["Plateau pressure","Pplat","Near-zero-flow pressure measured during a suitable inspiratory hold without active patient effort."],
+   ["Positive end-expiratory pressure","PEEP","Baseline end-expiratory pressure, subtracted from plateau pressure in this simple example."],
+   ["Driving pressure","ΔP","In this simple example, plateau pressure minus PEEP: ΔP = Pplat − PEEP."],
+  ]}},
+  {heading:"Two pressure patterns",table:{headers:["Comparable pattern","Clue","Possible examples"],rows:[
+   ["Peak airway pressure (Ppeak) rises while plateau pressure (Pplat) stays near baseline.","A larger flow-related pressure drop suggests increased airway resistance (Raw).","Endotracheal tube secretions, tube kinking or bronchoconstriction."],
+   ["Peak and plateau pressures both rise while their gap remains roughly unchanged.","A larger elastic pressure difference suggests lower respiratory system compliance (Crs).","Acute respiratory distress syndrome (ARDS), pulmonary fibrosis, or chest-wall and pleural factors such as pleural effusion."],
+  ]},paragraphs:[
+   "Compare these pressures only at comparable tidal volume (VT), inspiratory flow, PEEP, breath timing and patient effort. Plateau pressure (Pplat) requires an inspiratory hold with zero flow.",
+   "Pleural effusion can reduce total respiratory system compliance without changing the lung tissue itself. Total lung capacity (TLC) and compliance describe different properties.",
+  ]},
+  {heading:"Simulator exercise",bullets:[
+   "Keep volume control (VC) and tidal volume (VT) constant. Increase tube narrowing or thick secretions, then compare peak airway pressure (Ppeak), plateau pressure (Pplat) and the flow waveform.",
+   "Reopen the airway and compare a low-compliance scenario, such as ARDS, with the baseline case.",
+  ]},
+ ],workedExample:{prompt:"Tidal volume (VT) is 400 mL. Respiratory system compliance (Crs) changes from 40 to 20 mL/cmH₂O.",steps:["First elastic pressure difference: 400 ÷ 40 = 10 cmH₂O.","Second elastic pressure difference: 400 ÷ 20 = 20 cmH₂O.","This volume/compliance approximation excludes resistive pressure, patient effort and baseline pressure."]},
+ summary:["Lower respiratory system compliance (Crs) increases the pressure difference needed for the same volume.","At the same flow, higher airway resistance (Raw) usually widens the peak-to-plateau pressure gap.","If peak and plateau rise together while their gap stays stable, lower compliance is a clue; verify comparable measurement conditions."],
+ checkpoint:{prompt:"During volume control (VC), at equal tidal volume and flow, peak airway pressure (Ppeak) and plateau pressure (Pplat) both rise while their gap stays about the same. Which change is more likely?",answer:"Lower respiratory system compliance (Crs). The same volume requires a greater elastic pressure difference; lung, chest-wall and pleural causes are possible."},
+ glossary:[{term:"Crs — Respiratory system compliance",definition:"Volume change per pressure change."},{term:"Raw — Airway resistance",definition:"Flow-related pressure drop through the airways."},{term:"Ppeak — Peak airway pressure",definition:"Highest airway pressure during inspiration."},{term:"Pplat — Plateau pressure",definition:"Pressure estimated during a zero-flow inspiratory hold under suitable conditions."},{term:"PEEP — Positive end-expiratory pressure",definition:"Baseline pressure at end expiration."}],sources:courseChapters[1].sources.map(sourceEn)},
+];
+const scenarioEnglish = {
+ normal:{title:"Baseline respiratory mechanics",subtitle:"Fictional patient without lung disease",summary:"This case is a reference. During constant inspiratory flow, compare peak and plateau pressure, then inspect expiratory flow.",clinic:"Vary resistance and compliance to compare flow-related pressure with the pressure needed to expand the respiratory system."},
+ copd:{title:"COPD exacerbation",subtitle:"Expiratory obstruction and air trapping",summary:"In this emphysema-predominant example, airway resistance is high and exhalation is prolonged. Baseline bicarbonate is elevated to represent a history of chronic carbon dioxide retention.",clinic:"Check whether expiratory flow reaches zero before the next breath. Persistent end-expiratory flow can suggest air trapping and intrinsic PEEP."},
+ ards:{title:"Acute respiratory distress syndrome (ARDS)",subtitle:"Low compliance and high shunt",summary:"Filling and collapse of parts of the lung reduce ventilated surface area. Some blood flows through poorly ventilated regions.",clinic:"Observe plateau pressure at fixed volume. Then compare how increasing inspired oxygen fraction (FiO₂) affects modeled oxygenation in the presence of shunt."},
+ tb:{title:"Pulmonary tuberculosis with parenchymal involvement",subtitle:"TB · One hypothetical focal pattern",summary:"This fictional case depicts substantial pulmonary tuberculosis involvement. The effect on resistance and compliance varies among patients.",clinic:"Examine how poorly ventilated areas affect oxygenation. Cough, constitutional symptoms and hemoptysis may matter in clinical assessment."},
+ dah:{title:"Diffuse alveolar hemorrhage (DAH)",subtitle:"Reduced ventilation of blood-filled alveoli",summary:"Blood entering the alveoli decreases ventilation of affected areas. This model represents the process through lower compliance and greater shunt.",clinic:"Consider oxygenation and mechanics together. In practice, hemoptysis can be absent and a falling hemoglobin level is another clue."},
+ dhf:{title:"Cardiogenic pulmonary edema",subtitle:"Decompensated heart failure (DHF)",summary:"Higher left-sided filling pressure causes interstitial and alveolar fluid accumulation. The lung is less compliant and oxygenation worsens.",clinic:"Explore lower compliance and higher shunt separately to see how left-heart pressure affects pulmonary gas exchange."},
+ "cor-pulmonale":{title:"Cor pulmonale",subtitle:"Right-ventricular strain in lung disease",summary:"Chronic lung disease and pulmonary hypertension increase right-ventricular load. This fictional patient also has airway mechanics changes and lower cardiac output.",clinic:"Compare lung perfusion and right-heart work with the COPD case. Cardiac output is the volume of blood pumped each minute."},
+ pe:{title:"Acute pulmonary embolism (PE)",subtitle:"Higher alveolar dead space",summary:"Pulmonary vascular obstruction reduces blood flow to some ventilated alveoli. This case models greater dead space and lower cardiac output with right-ventricular strain.",clinic:"At similar minute ventilation, consider how much air reaches effectively perfused alveoli. In real patients, arterial carbon dioxide can also vary with breathing pattern."},
+ hemoptysis:{title:"Hemoptysis with airway obstruction",subtitle:"Blood or clot in the airways",summary:"Hemoptysis is a symptom. Here, blood or clot partially obstructs the airway in a fictional case.",clinic:"Blood-related obstruction can limit flow and impair oxygenation. Compare with diffuse alveolar hemorrhage, where blood in the alveoli predominates."},
+ fibrosis:{title:"Pulmonary fibrosis",subtitle:"Restrictive pattern and difficult expansion",summary:"Scarred interstitium makes expansion harder. This example highlights low compliance and impaired gas exchange.",clinic:"Under the same pressure and inspiratory time, compare tidal volume in pressure control with baseline. On pulmonary function testing, total lung capacity below the lower limit of normal indicates restriction."},
+ asthma:{title:"Severe asthma exacerbation",subtitle:"Expiratory obstruction and dynamic air trapping",summary:"Severe airway narrowing slows lung emptying. Expiratory flow can persist at end expiration and alveolar pressure may remain above set PEEP.",clinic:"Look together at end-expiratory flow, intrinsic PEEP and the peak-to-plateau pressure gap. Each reflects a different aspect of breath mechanics."},
+ "post-op-atelectasis":{title:"Postoperative atelectasis",subtitle:"Low compliance and partly recruitable shunt",summary:"Reduced lung volume and collapse of gravity-dependent units can lower compliance and divert blood through poorly ventilated regions.",clinic:"This example distinguishes the recruitable portion of shunt from respiratory-system stiffness. Read airway pressure and oxygenation together."},
+ aspiration:{title:"Chemical pneumonitis after aspiration",subtitle:"Acute injury after gastric contents enter the airway",summary:"Witnessed aspiration is followed by rapid loss of oxygenation. Chemical injury and alveolar edema can reduce ventilation and increase shunt.",clinic:"Timing and witnessed aspiration help distinguish chemical pneumonitis from aspiration pneumonia. Compare oxygenation with alveolar ventilation and arterial carbon dioxide."},
+ "obesity-hypoventilation":{title:"Obesity hypoventilation syndrome (OHS)",subtitle:"Reduced alveolar ventilation and carbon dioxide retention",summary:"This admitted patient has suspected OHS, chronic carbon dioxide retention and recent deterioration. Baseline bicarbonate of 32 represents prior compensation in this fixed example.",clinic:"Assess body mass index of at least 30, sleep-disordered breathing and awake arterial carbon dioxide of at least 45 mmHg after excluding other causes."},
+ "neuromuscular-weakness":{title:"Respiratory weakness in myasthenic crisis",subtitle:"Myasthenia gravis · Ventilatory pump failure",summary:"Respiratory and bulbar weakness impair ventilation in this fictional example. The panel depicts pressure-controlled mandatory breaths after the airway is secured.",clinic:"Follow weak cough, swallowing difficulty and secretions alongside trends in vital capacity and inspiratory strength. Clinical course matters when assessing the airway."},
+ "sepsis-acidosis":{title:"Pneumonia, sepsis and metabolic acidosis",subtitle:"Arterial blood gas · Respiratory compensation and mixed disorder",summary:"This fictional patient has pneumonia, sepsis, low bicarbonate and elevated lactate. Compare expected respiratory compensation with the possibility of accompanying respiratory acidosis.",clinic:"For metabolic acidosis, compare observed arterial carbon dioxide with Winter's expected range. Interpret lactate alongside perfusion, infection evidence and patient trends."},
+};
+const trainingEnglish = {
+ asthma:{presentation:"A fictional 34-year-old with asthma develops progressive dyspnea and respiratory fatigue over several hours. The ICU simulation depicts a stable state after volume-controlled ventilation starts.",challenge:"Change only the inspiratory-to-expiratory ratio from 1:2 to 1:4. At unchanged tidal volume and rate, predict end-expiratory flow, intrinsic PEEP and peak pressure.",answer:"Longer expiration lets end-expiratory flow approach zero and reduces intrinsic PEEP. The same volume must be delivered during a shorter inspiration, raising flow and potentially peak pressure in this constant-flow model, even as air trapping improves.",limitations:"Fictional values. The model uses fixed resistance, constant inspiratory flow and one lung compartment. In practice, flow limitation and regional heterogeneity alter the waveforms and intrinsic PEEP.",notes:["Provides clinical context for acute severe asthma and attack severity.","Explains dynamic air trapping, intrinsic PEEP and expiratory time in severe asthma ventilation."]},
+ "post-op-atelectasis":{presentation:"A fictional 62-year-old remains on volume-controlled ventilation shortly after abdominal surgery under general anesthesia. Oxygenation has fallen and an imagined image shows dependent basal volume loss.",challenge:"Increase only PEEP from 5 to 9 cmH₂O; hold inspired oxygen fraction and other settings constant. Predict effective shunt, arterial oxygen tension and tidal volume.",answer:"Part of this case's shunt responds to pressure. Effective shunt falls and modeled arterial oxygen rises. Target tidal volume stays constant in volume control; plateau pressure rises with the higher baseline pressure because compliance is held fixed.",limitations:"The PEEP values compare two teaching states. Recruitability is represented by an assumed coefficient. Hemodynamic effects, regional compliance changes and overdistension are outside this one-compartment model.",notes:["Describes impaired mechanics and shunt from perioperative atelectasis.","Discusses variable recruitability and PEEP responses across patients."]},
+ aspiration:{presentation:"In a fictional 57-year-old undergoing emergency anesthesia induction, gastric contents visibly enter the airway and oxygenation falls within minutes. The model shows early chemical injury after ventilation is established.",challenge:"Raise only inspired oxygen fraction (FiO₂) from 40% to 60%, keeping PEEP, volume and rate fixed. Predict arterial oxygen, arterial carbon dioxide and effective shunt.",answer:"Higher inspired oxygen raises modeled alveolar and arterial oxygen tensions. Effective shunt stays constant, and blood from nonventilated regions still limits the response. Arterial carbon dioxide stays constant because alveolar ventilation and carbon dioxide production do not change.",limitations:"Fictional patient and settings. Blood gases are steady-state estimates. The model does not simulate hours of inflammation or subsequent infection. Clinical distinction requires multiple findings.",notes:["Explains rapid chemical injury after witnessed aspiration versus aspiration pneumonia.","Compares mechanisms of aspiration pneumonitis and pneumonia.","Provides pneumonia background; chemical injury mechanisms come from the dedicated references."]},
+ "obesity-hypoventilation":{presentation:"A 54-year-old fictional man with body mass index 44, snoring, daytime sleepiness and morning headache is admitted with hypercapnic respiratory failure. OHS and possible severe obstructive sleep apnea are being assessed. The model starts in bilevel mode.",challenge:"In bilevel mode, increase only inspiratory pressure above expiratory pressure from 5 to 8 cmH₂O. Keep expiratory pressure, oxygen and timing fixed. Predict tidal volume, arterial carbon dioxide and pH.",answer:"The pressure difference increases. Modeled tidal volume rises from about 302 to 422 mL, arterial carbon dioxide falls from about 67 to 48 mmHg, and pH rises from about 7.30 to 7.44 with bicarbonate fixed. ATS conditionally suggests CPAP first for stable outpatients with confirmed OHS plus severe sleep apnea. For inpatients with respiratory failure and suspected OHS, it suggests NIV at discharge pending sleep-lab assessment and titration, ideally within three months.",limitations:"These are two modeled steady states with fixed bicarbonate. Dynamic sleep obstruction, mask leak, sleep titration and renal compensation are not represented. Values apply only to the fictional case.",notes:["Defines OHS and conditional CPAP and discharge NIV recommendations.","Corrected conditional discharge recommendation for suspected OHS.","Background on alveolar ventilation, dead space and arterial carbon dioxide."]},
+ "neuromuscular-weakness":{presentation:"A fictional 36-year-old woman with known myasthenia gravis develops speaking fatigue, dysphagia, weak cough and dyspnea after a respiratory infection. Her ICU team secures the airway; the exercise begins on pressure control.",challenge:"Change only inspiratory-to-expiratory ratio from 1:3 to 1:2. Keep rate, inspiratory pressure and PEEP constant. Compare inspiratory flow, tidal volume, arterial carbon dioxide and peak pressure.",answer:"Longer inspiration extends the decelerating flow phase and increases volume at fixed pressure. In this model peak pressure stays near 13 cmH₂O, tidal volume rises from about 394 to 420 mL and arterial carbon dioxide falls from about 47 to 44 mmHg. Expiratory time shortens, so inspect whether expiratory flow returns to zero.",limitations:"This mandatory-breath model does not simulate fluctuating myasthenic fatigue, cough strength, airway protection or aspiration. It gives steady-state outputs with fixed bicarbonate; ratios are chosen to compare waveforms only.",notes:["Reviews inspiratory, expiratory and bulbar weakness and limits of relying on one number.","Emphasizes clinical trends, bulbar weakness and aspiration risk.","Background on ventilatory failure from respiratory muscle weakness and airway protection."]},
+ "sepsis-acidosis":{presentation:"A fictional 64-year-old with pneumonia, hypotension and lactate 4.8 mmol/L is in the ICU on volume control. Initially bicarbonate is 14 mmol/L and arterial carbon dioxide about 41 mmHg. Identify the acid–base disorder first.",challenge:"Calculate expected compensation with Winter's formula, then increase only respiratory rate from 18 to 25. Compare arterial carbon dioxide, pH and expiratory time.",answer:"Winter's formula gives (1.5 × 14) + 8 = 29 mmHg, expected range 27–31. Initial arterial carbon dioxide near 41 is above that range, suggesting concurrent respiratory acidosis. Increasing rate at fixed volume raises alveolar ventilation; the panel shows carbon dioxide falling to about 29.5 and pH rising from 7.16 to 7.30. Expiratory time shortens and bicarbonate remains 14.",limitations:"The simulator does not measure lactate or model infection source, perfusion, renal compensation or transitional responses after adjustment. Values represent two steady states with fixed bicarbonate; clinical decisions require repeated patient assessment.",notes:["Supports lactate assessment in suspected sepsis together with clinical findings.","Gives expected arterial carbon dioxide and the ±2 range for mixed disorders.","Provides Henderson–Hasselbalch and acid–base physiology background."]},
+};
+const scenariosEn = scenarios.map(scenario=>{
+ const en=scenarioEnglish[scenario.id];
+ const result={...scenario,...en,source:sourceEn(scenario.source)};
+ if(scenario.training){
+  const training=trainingEnglish[scenario.id];
+  result.training={...scenario.training,...training,references:scenario.training.references.map((reference,index)=>({...sourceEn(reference),note:training.notes[index]}))};
+  delete result.training.notes;
+ }
+ return result;
+});
+export const contentEn = {
+ lesson:lessonEn,
+ courseChapters:courseChaptersEn,
+ modes:modesEn,
+ airwayTraining:airwayTrainingEn,
+ conditions:conditionsEn,
+ scenarios:scenariosEn,
+};
