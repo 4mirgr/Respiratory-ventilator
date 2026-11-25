@@ -1,4 +1,4 @@
-import { airwayTraining, lesson, scenarios, conditions, modes } from "./content.js?v=4-airway";
+import { airwayTraining, courseChapters, lesson, scenarios, conditions, modes } from "./content.js?v=7-course";
 import { simulate } from "./model.js?v=4-airway";
 import { createWaveforms } from "./waveforms.js?v=4-airway";
 import { createOrganMotion } from "./organ-motion.js?v=4-airway";
@@ -351,6 +351,96 @@ function appendSources(list, sources) {
   }
 }
 
+const coursePages = [];
+
+function courseTable(headers, rows) {
+  const table = node("table", undefined, "course-table");
+  const head = node("thead");
+  const headings = node("tr");
+  for (const heading of headers) headings.append(node("th", heading));
+  head.append(headings);
+  const body = node("tbody");
+  for (const row of rows) {
+    const tr = node("tr");
+    for (const value of row) tr.append(node("td", value));
+    body.append(tr);
+  }
+  table.append(head, body);
+  return table;
+}
+
+function courseList(items, className) {
+  const list = node("ul", undefined, className);
+  for (const item of items) list.append(node("li", item));
+  return list;
+}
+
+function appendCoursePages(addPage) {
+  for (const chapter of courseChapters) {
+    coursePages.push(addPage(chapter.id + "-opening", chapter.title, node("p", chapter.lead)));
+    for (const [index, section] of chapter.sections.entries()) {
+      if (section.table) {
+        for (let start = 0; start < section.table.rows.length; start += 2) {
+          coursePages.push(addPage(
+            chapter.id + "-table-" + index + "-" + start,
+            section.heading,
+            courseTable(section.table.headers, section.table.rows.slice(start, start + 2)),
+          ));
+        }
+      }
+      for (const [offset, paragraph] of (section.paragraphs || []).entries()) {
+        coursePages.push(addPage(chapter.id + "-text-" + index + "-" + offset, section.heading, node("p", paragraph)));
+      }
+      if (section.bullets) {
+        for (let start = 0; start < section.bullets.length; start += 2) {
+          coursePages.push(addPage(chapter.id + "-bullets-" + index + "-" + start, section.heading, courseList(section.bullets.slice(start, start + 2), "course-points")));
+        }
+      }
+    }
+    coursePages.push(addPage(chapter.id + "-example", "مثال حل شده · " + chapter.title,
+      node("p", chapter.workedExample.prompt), courseList(chapter.workedExample.steps, "course-points")));
+    coursePages.push(addPage(chapter.id + "-summary", "خلاصه · " + chapter.title,
+      courseList(chapter.summary, "course-points")));
+    const checkpoint = node("div", undefined, "course-checkpoint");
+    const reveal = node("button", "نمایش پاسخ", "secondary-button");
+    reveal.type = "button";
+    const answer = node("p", chapter.checkpoint.answer);
+    answer.hidden = true;
+    reveal.addEventListener("click", () => { answer.hidden = false; reveal.hidden = true; });
+    checkpoint.append(node("p", chapter.checkpoint.prompt), reveal, answer);
+    coursePages.push(addPage(chapter.id + "-checkpoint", "خودآزمایی · " + chapter.title, checkpoint));
+    for (let start = 0; start < chapter.glossary.length; start += 3) {
+      const entries = chapter.glossary.slice(start, start + 3).map(item => {
+        const entry = node("div", undefined, "course-term");
+        entry.append(node("strong", item.term), node("p", item.definition));
+        return entry;
+      });
+      coursePages.push(addPage(chapter.id + "-glossary-" + start, "واژه نامه · " + chapter.title, ...entries));
+    }
+    const references = node("ul", undefined, "reader-references");
+    appendSources(references, chapter.sources);
+    coursePages.push(addPage(chapter.id + "-sources", "منابع · " + chapter.title, references));
+  }
+}
+
+function downloadHandbook() {
+  const chapters = coursePages.map(page => {
+    const copy = page.cloneNode(true);
+    copy.hidden = false;
+    for (const element of copy.querySelectorAll("[hidden]")) element.hidden = false;
+    for (const button of copy.querySelectorAll("button")) button.remove();
+    return copy.outerHTML;
+  }).join("\n");
+  const style = `@page{size:A4;margin:18mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;direction:rtl;color:#102533;background:#e9f4f5;line-height:1.8;margin:0;padding:24px}main{max-width:850px;margin:auto}header{background:#0b2534;color:white;padding:24px;border-radius:14px;margin-bottom:20px}h1{font-size:1.8rem;margin:0}h2{color:#086a75;font-size:1.22rem;margin:0 0 12px}section{background:white;padding:20px;margin:12px 0;border-radius:12px;break-inside:avoid}p{margin:8px 0}table{border-collapse:collapse;width:100%;font-size:.89rem}td,th{border:1px solid #bfd4da;padding:9px;vertical-align:top}th{background:#d9eef0}li{margin:5px 0}a{color:#086a75}.course-term{padding:8px;border-bottom:1px solid #d9eef0}@media print{body{background:white;padding:0}header,section{border-radius:0;box-shadow:none}}`;
+  const html = `<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>جزوه آموزشی ونتیلاتور</title><style>${style}</style><main><header><h1>جزوه آموزشی ونتیلاتور</h1><p>حجم ها، تهویه آلوئولی و مکانیک تنفس</p></header>${chapters}</main></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+  const link = node("a");
+  link.href = url;
+  link.download = "ventilator-course-fa.html";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 function buildLesson() {
   setText("#lesson-title", lesson.title);
   setText("#lesson-intro", lesson.intro);
@@ -364,6 +454,7 @@ function buildLesson() {
     page.hidden = true;
     page.append(node("h2", title), ...content);
     pages.append(page);
+    return page;
   }
 
   for (const [index, volume] of lesson.volumes.entries()) {
@@ -380,6 +471,7 @@ function buildLesson() {
     addPage(key + "-" + number, volume.abbr + " و " + lesson.volumes[index + 1].abbr, ...entries);
   }
   pages.append(quiz);
+  appendCoursePages(addPage);
   for (const [index, concept] of lesson.concepts.entries()) {
     addPage("concept-" + (index + 1), concept.title, node("p", concept.body));
   }
@@ -433,6 +525,7 @@ buildControls(
 );
 appendSources(find("#airway-sources"), airwayTraining.sources);
 buildLesson();
+find("#download-handbook").addEventListener("click", downloadHandbook);
 for (const selector of ["#device-settings-view", "#device-airway-view", "#device-physiology-view", "#lesson-view"]) {
   pagers.set(selector, createPager(find(selector)));
 }

@@ -643,3 +643,20 @@ body:has(#simulator-view:not([hidden])) main {
   .physician-signature { gap: 2px; font-size: .64rem; }
   .physician-signature img { width: 22px; height: 22px; padding: 1px; }
 }
+.lesson-actions { display: flex; gap: 5px; }
+#lesson-view .course-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: clamp(.72rem, 1.25vw, .9rem); line-height: 1.45; }
+#lesson-view .course-table th, #lesson-view .course-table td { padding: clamp(4px, .9dvh, 9px); border: 1px solid #315266; vertical-align: top; overflow-wrap: anywhere; }
+#lesson-view .course-table th { color: #79e7dc; background: #193745; }
+#lesson-view .course-table td { color: #e3edf4; }
+#lesson-view .course-points { padding-inline-start: 22px; margin: 7px 0; line-height: 1.52; }
+#lesson-view .course-points li { margin-block: 5px; }
+#lesson-view .course-checkpoint { display: grid; gap: 10px; justify-items: start; }
+#lesson-view .course-term { border-bottom: 1px solid #315266; padding-block: 4px; }
+#lesson-view .course-term strong { color: #79e7dc; }
+@media (max-width: 620px) {
+  #lesson-view .course-table { font-size: .68rem; line-height: 1.33; }
+  #lesson-view .course-table th, #lesson-view .course-table td { padding: 3px; }
+  #lesson-view .course-points { font-size: .82rem; line-height: 1.4; }
+  #lesson-view .lesson-heading { align-items: flex-start; }
+  #lesson-view .lesson-actions { flex-wrap: wrap; justify-content: end; }
+}

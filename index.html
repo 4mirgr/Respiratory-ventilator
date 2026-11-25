@@ -12,8 +12,8 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css?v=5-lung">
   <link rel="stylesheet" href="./organ-motion.css?v=4-airway">
-  <link rel="stylesheet" href="./device.css?v=6-header">
-  <script type="module" src="./app.js?v=4-airway"></script>
+  <link rel="stylesheet" href="./device.css?v=7-course">
+  <script type="module" src="./app.js?v=7-course"></script>
 </head>
 <body>
   <header class="site-header">
@@ -248,7 +248,10 @@
     <section id="lesson-view" class="paged-view" aria-labelledby="lesson-title" hidden>
       <header class="lesson-heading">
         <h1 id="lesson-title" tabindex="-1">حجم‌ها و ظرفیت‌های ریه</h1>
-        <button id="open-simulator" type="button" class="secondary-button">بازگشت به مانیتور</button>
+        <div class="lesson-actions">
+          <button id="download-handbook" type="button" class="secondary-button">دریافت جزوه</button>
+          <button id="open-simulator" type="button" class="secondary-button">بازگشت به مانیتور</button>
+        </div>
       </header>
       <div class="paged-pages">
         <section data-panel-page="intro" data-page-title="شروع درس" class="lesson-panel">
