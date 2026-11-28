@@ -491,7 +491,10 @@ function buildLesson() {
     addPage("concept-" + (index + 1), concept.title, node("p", concept.body));
   }
   for (const mode of modes) {
-    addPage("mode-" + mode.id, mode.short + " · " + mode.title, node("p", mode.description), node("p", mode.uses), node("p", mode.watch));
+    const title = mode.short + " · " + mode.title;
+    addPage("mode-" + mode.id, title, node("p", mode.description));
+    addPage("mode-" + mode.id + "-uses", title + tx(" · کاربرد", " · Uses"), node("p", mode.uses));
+    addPage("mode-" + mode.id + "-watch", title + tx(" · روی مانیتور", " · On the monitor"), node("p", mode.watch));
   }
   for (let start = 0; start < lesson.sources.length; start += 4) {
     const number = start / 4 + 1;
